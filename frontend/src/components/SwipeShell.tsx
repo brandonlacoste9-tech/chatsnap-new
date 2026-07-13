@@ -42,10 +42,13 @@ export function SwipeShell() {
       style={{
         display: "flex",
         overflowX: "auto",
+        overflowY: "hidden",
         scrollSnapType: "x mandatory",
         height: "100%",
         width: "100%",
         WebkitOverflowScrolling: "touch",
+        // Prefer horizontal swipe; buttons use touch-action: manipulation
+        touchAction: "pan-x",
       }}
     >
       <section
@@ -54,6 +57,8 @@ export function SwipeShell() {
           height: "100%",
           scrollSnapAlign: "start",
           flexShrink: 0,
+          position: "relative",
+          overflow: "hidden",
         }}
       >
         <CameraPage />
@@ -64,6 +69,7 @@ export function SwipeShell() {
           height: "100%",
           scrollSnapAlign: "start",
           flexShrink: 0,
+          overflowY: "auto",
         }}
       >
         <InboxPage />
