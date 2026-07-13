@@ -7,17 +7,54 @@ export type FriendEdge = {
   direction: "incoming" | "outgoing" | "mutual";
 };
 
+function cleanUsername(username: string) {
+  return username.trim().toLowerCase().replace(/^@/, "");
+}
+
 export async function searchByUsername(
   username: string,
-): Promise<Profile | null> {
-  if (!supabase) return null;
-  const clean = username.trim().toLowerCase().replace(/^@/, "");
-  const { data } = await supabase
+): Promise<{ profile: Profile | null; error?: string }> {
+  if (!supabase) return { profile: null, error: "No backend" };
+  const clean = cleanUsername(username);
+  if (clean.length < 2) return { profile: null, error: "Type a username" };
+
+  // Exact first
+  const exact = await supabase
     .from("profiles")
     .select("*")
     .eq("username", clean)
     .maybeSingle();
-  return (data as Profile) ?? null;
+
+  if (exact.error) return { profile: null, error: exact.error.message };
+  if (exact.data) return { profile: exact.data as Profile };
+
+  // Partial fallback (e.g. "bran" → brandon)
+  const partial = await supabase
+    .from("profiles")
+    .select("*")
+    .ilike("username", `%${clean}%`)
+    .not("username", "is", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (partial.error) return { profile: null, error: partial.error.message };
+  return { profile: (partial.data as Profile) ?? null };
+}
+
+/** Other users with usernames (small social graph discovery for MVP). */
+export async function listDiscoverableUsers(
+  myId: string,
+): Promise<{ users: Profile[]; error?: string }> {
+  if (!supabase) return { users: [], error: "No backend" };
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .neq("id", myId)
+    .not("username", "is", null)
+    .order("username", { ascending: true })
+    .limit(50);
+  if (error) return { users: [], error: error.message };
+  return { users: (data as Profile[]) ?? [] };
 }
 
 export async function sendFriendRequest(
@@ -26,6 +63,31 @@ export async function sendFriendRequest(
 ): Promise<string | null> {
   if (!supabase) return "No backend";
   if (myId === theirId) return "That's you";
+
+  // Already friends / pending either direction?
+  const { data: existing } = await supabase
+    .from("friendships")
+    .select("*")
+    .or(
+      `and(requester_id.eq.${myId},addressee_id.eq.${theirId}),and(requester_id.eq.${theirId},addressee_id.eq.${myId})`,
+    )
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.status === "accepted") return "Already friends";
+    if (existing.status === "pending") {
+      // They already requested you → accept
+      if (existing.requester_id === theirId && existing.addressee_id === myId) {
+        const { error } = await supabase
+          .from("friendships")
+          .update({ status: "accepted" })
+          .eq("id", existing.id);
+        return error?.message ?? null;
+      }
+      return "Request already sent";
+    }
+  }
+
   const { error } = await supabase.from("friendships").insert({
     requester_id: myId,
     addressee_id: theirId,
@@ -55,9 +117,13 @@ export async function listFriendships(myId: string): Promise<FriendEdge[]> {
 
   if (error || !data) return [];
 
-  const otherIds = data.map((f) =>
-    f.requester_id === myId ? f.addressee_id : f.requester_id,
-  );
+  const otherIds = [
+    ...new Set(
+      data.map((f) =>
+        f.requester_id === myId ? f.addressee_id : f.requester_id,
+      ),
+    ),
+  ];
   if (otherIds.length === 0) return [];
 
   const { data: profiles } = await supabase
