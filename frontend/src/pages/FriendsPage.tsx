@@ -13,6 +13,7 @@ import { useT } from "@/lib/i18n";
 import { BottomChrome } from "@/components/BottomChrome";
 import { useToast } from "@/components/Toast";
 import { shareInvite } from "@/lib/media";
+import { listStreaksForUser } from "@/lib/streaks";
 
 export function FriendsPage() {
   const t = useT();
@@ -22,6 +23,7 @@ export function FriendsPage() {
   const [found, setFound] = useState<Profile | null>(null);
   const [people, setPeople] = useState<Profile[]>([]);
   const [edges, setEdges] = useState<FriendEdge[]>([]);
+  const [streaks, setStreaks] = useState<Map<string, number>>(new Map());
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -33,18 +35,19 @@ export function FriendsPage() {
     if (!myId || demoMode) {
       setEdges([]);
       setPeople([]);
+      setStreaks(new Map());
       return;
     }
-    const [fEdges, disc] = await Promise.all([
+    const [fEdges, disc, st] = await Promise.all([
       listFriendships(myId),
       listDiscoverableUsers(myId),
+      listStreaksForUser(myId),
     ]);
     setEdges(fEdges);
+    setStreaks(st);
     if (disc.error) setMsg(disc.error);
     // Hide people already friends / pending
-    const taken = new Set(
-      fEdges.map((e) => e.profile.id),
-    );
+    const taken = new Set(fEdges.map((e) => e.profile.id));
     setPeople(disc.users.filter((u) => !taken.has(u.id)));
   }, [myId, demoMode]);
 
@@ -342,10 +345,15 @@ export function FriendsPage() {
             <div className="avatar">
               {(e.profile.username?.[0] ?? "?").toUpperCase()}
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <strong>@{e.profile.username}</strong>
               <div className="muted">{e.profile.display_name}</div>
             </div>
+            {(streaks.get(e.profile.id) ?? 0) > 0 && (
+              <span style={{ fontWeight: 800, color: "var(--accent)" }}>
+                🔥 {streaks.get(e.profile.id)}
+              </span>
+            )}
           </div>
         ))}
       </div>

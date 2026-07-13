@@ -103,7 +103,9 @@ export function InboxPage() {
                 </strong>
                 <div className="muted">
                   {it.mediaType === "video" ? "🎬" : "📷"} · {it.durationSec}
-                  {t("seconds")} · {t("viewing")}
+                  {t("seconds")}
+                  {it.caption ? ` · “${it.caption.slice(0, 28)}”` : ""} ·{" "}
+                  {t("viewing")}
                 </div>
               </div>
               <span style={{ color: "var(--accent)", fontWeight: 800 }}>●</span>

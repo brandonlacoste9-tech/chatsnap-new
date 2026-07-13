@@ -5,6 +5,7 @@ import { listAcceptedFriends } from "@/lib/friends";
 import type { Profile } from "@/lib/supabase";
 import { sendSnap } from "@/lib/snaps";
 import { compressImage } from "@/lib/media";
+import { listStreaksForUser } from "@/lib/streaks";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import type { CaptureResult } from "@/hooks/useCamera";
@@ -19,6 +20,7 @@ export function SendToPage() {
   const capture = location.state as CaptureResult | null;
   const { user, demoMode, profile } = useAuth();
   const [friends, setFriends] = useState<Profile[]>([]);
+  const [streaks, setStreaks] = useState<Map<string, number>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [duration, setDuration] = useState(5);
   const [caption, setCaption] = useState("");
@@ -35,10 +37,12 @@ export function SendToPage() {
       setFriends([]);
       return;
     }
-    void listAcceptedFriends(id).then((list) => {
+    void (async () => {
+      const list = await listAcceptedFriends(id);
       setFriends(list);
       if (list.length === 1) setSelected(new Set([list[0].id]));
-    });
+      setStreaks(await listStreaksForUser(id));
+    })();
   }, [capture, user?.id, profile?.id, demoMode, nav]);
 
   function toggle(id: string) {
@@ -84,6 +88,7 @@ export function SendToPage() {
       mediaType: capture.mediaType,
       durationSec: duration,
       recipientIds: [...selected],
+      caption: caption.trim() || undefined,
     });
     setBusy(false);
     if (err) {
@@ -211,7 +216,12 @@ export function SendToPage() {
             </div>
             <div style={{ flex: 1 }}>
               <strong>@{f.username}</strong>
-              <div className="muted">{f.display_name}</div>
+              <div className="muted">
+                {f.display_name}
+                {(streaks.get(f.id) ?? 0) > 0
+                  ? ` · 🔥 ${streaks.get(f.id)} ${t("dayStreak")}`
+                  : ""}
+              </div>
             </div>
             <span style={{ fontSize: 18, color: "var(--accent)" }}>
               {selected.has(f.id) ? "✓" : ""}

@@ -9,6 +9,7 @@ export function ViewerPage() {
   const nav = useNavigate();
   const [url, setUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [caption, setCaption] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const done = useRef(false);
@@ -27,6 +28,7 @@ export function ViewerPage() {
       }
       setUrl(res.url);
       setMediaType(res.mediaType);
+      setCaption(res.caption);
       setLeft(res.durationSec);
 
       let remaining = res.durationSec;
@@ -61,7 +63,11 @@ export function ViewerPage() {
     return (
       <div className="page-center">
         <p>{error}</p>
-        <button type="button" className="btn btn-primary" onClick={() => nav("/app/inbox")}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => nav("/app/inbox")}
+        >
           {t("inbox")}
         </button>
       </div>
@@ -79,22 +85,51 @@ export function ViewerPage() {
         alignItems: "center",
         justifyContent: "center",
       }}
+      onClick={() => {
+        /* tap doesn't skip — timer only (ephemeral feel) */
+      }}
     >
       <div
         style={{
           position: "absolute",
           top: 16,
+          left: 16,
+          right: 16,
+          height: 4,
+          borderRadius: 4,
+          background: "rgba(255,255,255,0.2)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: "100%",
+            background: "var(--accent)",
+            transformOrigin: "left",
+            animation: left > 0 ? `none` : undefined,
+            // visual progress approximated by countdown chip
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          top: 28,
           right: 16,
           background: "var(--accent)",
           color: "#000",
           fontWeight: 800,
           borderRadius: 999,
           padding: "6px 12px",
+          zIndex: 2,
         }}
       >
         {left}
         {t("seconds")}
       </div>
+
       {url && mediaType === "image" && (
         <img
           src={url}
@@ -111,6 +146,24 @@ export function ViewerPage() {
         />
       )}
       {!url && !error && <p className="muted">{t("loading")}</p>}
+
+      {caption && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 48,
+            left: 16,
+            right: 16,
+            textAlign: "center",
+            fontWeight: 800,
+            fontSize: 18,
+            textShadow: "0 2px 8px #000",
+            color: "#fff",
+          }}
+        >
+          {caption}
+        </div>
+      )}
     </div>
   );
 }

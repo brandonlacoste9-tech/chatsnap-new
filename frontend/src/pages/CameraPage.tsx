@@ -14,7 +14,12 @@ export function CameraPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   function goSend(cap: CaptureResult) {
-    navigate("/send", { state: cap });
+    // Photos → doodle/sticker editor; video → send directly
+    if (cap.mediaType === "image") {
+      navigate("/edit", { state: cap });
+    } else {
+      navigate("/send", { state: cap });
+    }
   }
 
   async function onShutter() {

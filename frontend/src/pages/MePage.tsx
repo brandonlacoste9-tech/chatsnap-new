@@ -6,6 +6,7 @@ import { BottomChrome } from "@/components/BottomChrome";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/components/Toast";
 import { inviteUrl, shareInvite } from "@/lib/media";
+import { ensureNotifyPermission } from "@/lib/notifications";
 
 export function MePage() {
   const t = useT();
@@ -14,6 +15,9 @@ export function MePage() {
   const nav = useNavigate();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
+  const [notifState, setNotifState] = useState(() =>
+    typeof Notification !== "undefined" ? Notification.permission : "default",
+  );
 
   const username = profile?.username ?? "";
   const link = username ? inviteUrl(username) : "";
@@ -24,6 +28,14 @@ export function MePage() {
     const ok = await shareInvite(username);
     setBusy(false);
     toast(ok ? t("inviteCopied") : link, ok ? "ok" : "info");
+  }
+
+  async function onNotifs() {
+    const ok = await ensureNotifyPermission();
+    setNotifState(
+      typeof Notification !== "undefined" ? Notification.permission : "denied",
+    );
+    toast(ok ? t("notifsOn") : t("notifsOff"), ok ? "ok" : "info");
   }
 
   return (
@@ -76,6 +88,16 @@ export function MePage() {
         <p className="muted" style={{ marginTop: 8 }}>
           {locale.toUpperCase()}
         </p>
+
+        <h3 style={{ marginTop: 20 }}>{t("enableNotifs")}</h3>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ width: "100%" }}
+          onClick={() => void onNotifs()}
+        >
+          {notifState === "granted" ? t("notifsOn") : t("enableNotifs")}
+        </button>
 
         <p className="muted" style={{ fontSize: 13, marginTop: 20 }}>
           {t("installHint")}

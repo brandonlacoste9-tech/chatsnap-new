@@ -82,6 +82,17 @@ export const en = {
   yourInvite: "Your invite link",
   gallery: "Gallery",
   snapLabel: "SNAP",
+  draw: "Draw",
+  stickers: "Stickers",
+  clear: "Clear",
+  skipEdit: "Skip",
+  editSnap: "Doodle & stickers",
+  streak: "Streak",
+  dayStreak: "day streak",
+  enableNotifs: "Enable alerts",
+  notifsOn: "Alerts on",
+  notifsOff: "Alerts off / denied",
+  newSnapNotif: "New snap!",
 } as const;
 
 export type MessageKey = keyof typeof en;

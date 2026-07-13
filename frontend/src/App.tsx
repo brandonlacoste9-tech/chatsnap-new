@@ -10,6 +10,8 @@ import { MePage } from "@/pages/MePage";
 import { SendToPage } from "@/pages/SendToPage";
 import { ViewerPage } from "@/pages/ViewerPage";
 import { AddFriendPage } from "@/pages/AddFriendPage";
+import { EditSnapPage } from "@/pages/EditSnapPage";
+import { InboxWatcher } from "@/components/InboxWatcher";
 import { useT } from "@/lib/i18n";
 
 function RequireUser({ children }: { children: ReactNode }) {
@@ -77,51 +79,62 @@ function AppShell() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/username" element={<UsernameGate />} />
-      <Route path="/add/:username" element={<AddFriendGate />} />
-      <Route
-        path="/app/*"
-        element={
-          <RequireUser>
-            <AppShell />
-          </RequireUser>
-        }
-      />
-      <Route
-        path="/friends"
-        element={
-          <RequireUser>
-            <FriendsPage />
-          </RequireUser>
-        }
-      />
-      <Route
-        path="/me"
-        element={
-          <RequireUser>
-            <MePage />
-          </RequireUser>
-        }
-      />
-      <Route
-        path="/send"
-        element={
-          <RequireUser>
-            <SendToPage />
-          </RequireUser>
-        }
-      />
-      <Route
-        path="/view/:recipientId"
-        element={
-          <RequireUser>
-            <ViewerPage />
-          </RequireUser>
-        }
-      />
-      <Route path="*" element={<Navigate to="/app" replace />} />
-    </Routes>
+    <>
+      <InboxWatcher />
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/username" element={<UsernameGate />} />
+        <Route path="/add/:username" element={<AddFriendGate />} />
+        <Route
+          path="/app/*"
+          element={
+            <RequireUser>
+              <AppShell />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <RequireUser>
+              <FriendsPage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/me"
+          element={
+            <RequireUser>
+              <MePage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/edit"
+          element={
+            <RequireUser>
+              <EditSnapPage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/send"
+          element={
+            <RequireUser>
+              <SendToPage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/view/:recipientId"
+          element={
+            <RequireUser>
+              <ViewerPage />
+            </RequireUser>
+          }
+        />
+        <Route path="*" element={<Navigate to="/app" replace />} />
+      </Routes>
+    </>
   );
 }

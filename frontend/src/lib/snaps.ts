@@ -1,4 +1,5 @@
 import { supabase, type Profile } from "@/lib/supabase";
+import { bumpStreakOnSend } from "@/lib/streaks";
 
 export type InboxItem = {
   recipientId: string;
@@ -7,6 +8,7 @@ export type InboxItem = {
   mediaType: "image" | "video";
   createdAt: string;
   expiresAt: string;
+  caption: string | null;
   sender: Profile;
 };
 
@@ -16,6 +18,7 @@ export async function sendSnap(opts: {
   mediaType: "image" | "video";
   durationSec: number;
   recipientIds: string[];
+  caption?: string;
 }): Promise<string | null> {
   if (!supabase) return "No backend";
   if (opts.recipientIds.length === 0) return "No recipients";
@@ -27,12 +30,15 @@ export async function sendSnap(opts: {
   const { error: upErr } = await supabase.storage
     .from("snaps")
     .upload(path, opts.blob, {
-      contentType: opts.blob.type || (opts.mediaType === "image" ? "image/jpeg" : "video/webm"),
+      contentType:
+        opts.blob.type ||
+        (opts.mediaType === "image" ? "image/jpeg" : "video/webm"),
       upsert: false,
     });
   if (upErr) return upErr.message;
 
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const caption = opts.caption?.trim().slice(0, 120) || null;
   const { error: snapErr } = await supabase.from("snaps").insert({
     id: snapId,
     sender_id: opts.senderId,
@@ -40,6 +46,7 @@ export async function sendSnap(opts: {
     media_type: opts.mediaType,
     duration_sec: opts.durationSec,
     expires_at: expires,
+    caption,
   });
   if (snapErr) return snapErr.message;
 
@@ -49,7 +56,11 @@ export async function sendSnap(opts: {
     status: "pending" as const,
   }));
   const { error: recErr } = await supabase.from("snap_recipients").insert(rows);
-  return recErr?.message ?? null;
+  if (recErr) return recErr.message;
+
+  // Fire-and-forget streaks
+  void bumpStreakOnSend(opts.senderId, opts.recipientIds).catch(() => {});
+  return null;
 }
 
 export async function countPendingInbox(myId: string): Promise<number> {
@@ -86,6 +97,7 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
       duration_sec: number;
       created_at: string;
       expires_at: string;
+      caption: string | null;
     } | null;
     if (!snap) continue;
     if (snap.expires_at < now) continue;
@@ -97,6 +109,7 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
       mediaType: snap.media_type,
       createdAt: snap.created_at,
       expiresAt: snap.expires_at,
+      caption: snap.caption ?? null,
       sender: {
         id: snap.sender_id,
         username: null,
@@ -178,6 +191,7 @@ export async function openSnap(recipientRowId: string): Promise<{
   url: string;
   mediaType: "image" | "video";
   durationSec: number;
+  caption: string | null;
   error?: string;
 } | null> {
   if (!supabase) return null;
@@ -188,9 +202,22 @@ export async function openSnap(recipientRowId: string): Promise<{
     .eq("id", recipientRowId)
     .maybeSingle();
 
-  if (error || !rec) return { url: "", mediaType: "image", durationSec: 5, error: "gone" };
+  if (error || !rec)
+    return {
+      url: "",
+      mediaType: "image",
+      durationSec: 5,
+      caption: null,
+      error: "gone",
+    };
   if (rec.status === "consumed") {
-    return { url: "", mediaType: "image", durationSec: 5, error: "gone" };
+    return {
+      url: "",
+      mediaType: "image",
+      durationSec: 5,
+      caption: null,
+      error: "gone",
+    };
   }
 
   const snap = rec.snaps as unknown as {
@@ -198,10 +225,17 @@ export async function openSnap(recipientRowId: string): Promise<{
     media_type: "image" | "video";
     duration_sec: number;
     expires_at: string;
+    caption: string | null;
   };
 
   if (snap.expires_at < new Date().toISOString()) {
-    return { url: "", mediaType: "image", durationSec: 5, error: "expired" };
+    return {
+      url: "",
+      mediaType: "image",
+      durationSec: 5,
+      caption: null,
+      error: "expired",
+    };
   }
 
   await supabase
@@ -214,13 +248,20 @@ export async function openSnap(recipientRowId: string): Promise<{
     .createSignedUrl(snap.media_path, 60);
 
   if (!signed?.signedUrl) {
-    return { url: "", mediaType: "image", durationSec: 5, error: "gone" };
+    return {
+      url: "",
+      mediaType: "image",
+      durationSec: 5,
+      caption: null,
+      error: "gone",
+    };
   }
 
   return {
     url: signed.signedUrl,
     mediaType: snap.media_type,
     durationSec: snap.duration_sec,
+    caption: snap.caption ?? null,
   };
 }
 
