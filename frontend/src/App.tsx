@@ -12,6 +12,8 @@ import { ViewerPage } from "@/pages/ViewerPage";
 import { AddFriendPage } from "@/pages/AddFriendPage";
 import { EditSnapPage } from "@/pages/EditSnapPage";
 import { InboxWatcher } from "@/components/InboxWatcher";
+import { ChatsPage } from "@/pages/ChatsPage";
+import { ChatThreadPage } from "@/pages/ChatThreadPage";
 import { useT } from "@/lib/i18n";
 
 function RequireUser({ children }: { children: ReactNode }) {
@@ -98,6 +100,22 @@ export default function App() {
           element={
             <RequireUser>
               <FriendsPage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/chats"
+          element={
+            <RequireUser>
+              <ChatsPage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/chat/:friendId"
+          element={
+            <RequireUser>
+              <ChatThreadPage />
             </RequireUser>
           }
         />

@@ -95,4 +95,11 @@ export const fr: Dict = {
   notifsOn: "Alertes activées",
   notifsOff: "Alertes off / refusées",
   newSnapNotif: "Nouveau snap !",
+  chats: "Chat",
+  noChats: "Pas encore de chats. Ajoute des amis, puis écris-leur ici.",
+  sayHi: "Dis allô 👋",
+  typeMessage: "Message…",
+  voiceNote: "Note vocale",
+  micError: "Permission micro requise",
+  message: "Message",
 };

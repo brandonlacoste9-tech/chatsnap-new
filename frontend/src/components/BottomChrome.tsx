@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useT } from "@/lib/i18n";
 import { useInboxCount } from "@/hooks/useInboxCount";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 const linkStyle = ({ isActive }: { isActive: boolean }) =>
   ({
@@ -8,15 +9,40 @@ const linkStyle = ({ isActive }: { isActive: boolean }) =>
     textAlign: "center" as const,
     textDecoration: "none",
     color: isActive ? "var(--accent)" : "var(--muted)",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: isActive ? 700 : 500,
-    padding: "8px 4px",
+    padding: "6px 2px",
     position: "relative" as const,
   }) as const;
 
+function Badge({ n }: { n: number }) {
+  if (n <= 0) return null;
+  return (
+    <span
+      style={{
+        position: "absolute",
+        top: -6,
+        right: -10,
+        minWidth: 16,
+        height: 16,
+        borderRadius: 999,
+        background: "var(--accent)",
+        color: "#000",
+        fontSize: 10,
+        fontWeight: 800,
+        lineHeight: "16px",
+        padding: "0 4px",
+      }}
+    >
+      {n > 9 ? "9+" : n}
+    </span>
+  );
+}
+
 export function BottomChrome() {
   const t = useT();
-  const { count } = useInboxCount();
+  const { count: snapCount } = useInboxCount();
+  const { count: chatCount } = useUnreadMessages();
 
   return (
     <nav
@@ -36,6 +62,13 @@ export function BottomChrome() {
         👥
         <div>{t("friends")}</div>
       </NavLink>
+      <NavLink to="/chats" style={linkStyle}>
+        <span style={{ position: "relative", display: "inline-block" }}>
+          💬
+          <Badge n={chatCount} />
+        </span>
+        <div>{t("chats")}</div>
+      </NavLink>
       <NavLink to="/app" end style={linkStyle}>
         📷
         <div>{t("camera")}</div>
@@ -43,26 +76,7 @@ export function BottomChrome() {
       <NavLink to="/app/inbox" style={linkStyle}>
         <span style={{ position: "relative", display: "inline-block" }}>
           📬
-          {count > 0 && (
-            <span
-              style={{
-                position: "absolute",
-                top: -6,
-                right: -12,
-                minWidth: 16,
-                height: 16,
-                borderRadius: 999,
-                background: "var(--accent)",
-                color: "#000",
-                fontSize: 10,
-                fontWeight: 800,
-                lineHeight: "16px",
-                padding: "0 4px",
-              }}
-            >
-              {count > 9 ? "9+" : count}
-            </span>
-          )}
+          <Badge n={snapCount} />
         </span>
         <div>{t("inbox")}</div>
       </NavLink>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   acceptFriendRequest,
@@ -17,6 +18,7 @@ import { listStreaksForUser } from "@/lib/streaks";
 
 export function FriendsPage() {
   const t = useT();
+  const nav = useNavigate();
   const { toast } = useToast();
   const { user, demoMode, profile } = useAuth();
   const [q, setQ] = useState("");
@@ -350,10 +352,24 @@ export function FriendsPage() {
               <div className="muted">{e.profile.display_name}</div>
             </div>
             {(streaks.get(e.profile.id) ?? 0) > 0 && (
-              <span style={{ fontWeight: 800, color: "var(--accent)" }}>
+              <span
+                style={{
+                  fontWeight: 800,
+                  color: "var(--accent)",
+                  marginRight: 8,
+                }}
+              >
                 🔥 {streaks.get(e.profile.id)}
               </span>
             )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ padding: "0.45rem 0.75rem" }}
+              onClick={() => nav(`/chat/${e.profile.id}`)}
+            >
+              💬
+            </button>
           </div>
         ))}
       </div>

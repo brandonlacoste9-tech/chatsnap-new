@@ -93,6 +93,13 @@ export const en = {
   notifsOn: "Alerts on",
   notifsOff: "Alerts off / denied",
   newSnapNotif: "New snap!",
+  chats: "Chat",
+  noChats: "No chats yet. Add friends, then message them here.",
+  sayHi: "Say hi 👋",
+  typeMessage: "Message…",
+  voiceNote: "Voice note",
+  micError: "Microphone permission needed",
+  message: "Message",
 } as const;
 
 export type MessageKey = keyof typeof en;
