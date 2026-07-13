@@ -64,9 +64,34 @@ export function ChatThreadPage() {
 
   useEffect(() => {
     void load();
-    const id = window.setInterval(() => void load(), 4000);
-    return () => window.clearInterval(id);
-  }, [load]);
+    if (!myId || !friendId || !supabase) return;
+
+    // Realtime: new messages in this thread
+    const channel = supabase
+      .channel(`chat-${myId}-${friendId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const row = payload.new as ChatMessage;
+          const relevant =
+            (row.sender_id === myId && row.recipient_id === friendId) ||
+            (row.sender_id === friendId && row.recipient_id === myId);
+          if (relevant) void load();
+        },
+      )
+      .subscribe();
+
+    const poll = window.setInterval(() => void load(), 15000);
+    return () => {
+      window.clearInterval(poll);
+      void supabase?.removeChannel(channel);
+    };
+  }, [load, myId, friendId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

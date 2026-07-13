@@ -2,10 +2,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SnapEditor } from "@/components/SnapEditor";
 import type { CaptureResult } from "@/hooks/useCamera";
 
+type EditState = CaptureResult & { toStory?: boolean };
+
 export function EditSnapPage() {
   const nav = useNavigate();
   const location = useLocation();
-  const capture = location.state as CaptureResult | null;
+  const capture = location.state as EditState | null;
 
   if (!capture) {
     nav("/app", { replace: true });
@@ -28,10 +30,11 @@ export function EditSnapPage() {
       onSkip={() => nav("/send", { state: capture })}
       onDone={(blob, previewUrl) => {
         URL.revokeObjectURL(capture.previewUrl);
-        const next: CaptureResult = {
+        const next: EditState = {
           blob,
           mediaType: "image",
           previewUrl,
+          toStory: capture.toStory,
         };
         nav("/send", { state: next });
       }}

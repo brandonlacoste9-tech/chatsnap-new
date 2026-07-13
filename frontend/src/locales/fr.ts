@@ -102,4 +102,10 @@ export const fr: Dict = {
   voiceNote: "Note vocale",
   micError: "Permission micro requise",
   message: "Message",
+  myStory: "Mon Story",
+  storyPosted: "Ajouté à ton Story !",
+  postStory: "Publier au Story",
+  sendToFriends: "Envoyer aux amis",
+  storyHint: "Tes amis peuvent le voir pendant 24 h.",
+  stories: "Stories",
 };

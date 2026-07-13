@@ -14,6 +14,7 @@ import { EditSnapPage } from "@/pages/EditSnapPage";
 import { InboxWatcher } from "@/components/InboxWatcher";
 import { ChatsPage } from "@/pages/ChatsPage";
 import { ChatThreadPage } from "@/pages/ChatThreadPage";
+import { StoryViewerPage } from "@/pages/StoryViewerPage";
 import { useT } from "@/lib/i18n";
 
 function RequireUser({ children }: { children: ReactNode }) {
@@ -148,6 +149,14 @@ export default function App() {
           element={
             <RequireUser>
               <ViewerPage />
+            </RequireUser>
+          }
+        />
+        <Route
+          path="/story/:userId"
+          element={
+            <RequireUser>
+              <StoryViewerPage />
             </RequireUser>
           }
         />

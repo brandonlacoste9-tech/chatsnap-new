@@ -100,6 +100,12 @@ export const en = {
   voiceNote: "Voice note",
   micError: "Microphone permission needed",
   message: "Message",
+  myStory: "My Story",
+  storyPosted: "Added to your Story!",
+  postStory: "Post to Story",
+  sendToFriends: "Send to friends",
+  storyHint: "Friends can view this for 24 hours.",
+  stories: "Stories",
 } as const;
 
 export type MessageKey = keyof typeof en;

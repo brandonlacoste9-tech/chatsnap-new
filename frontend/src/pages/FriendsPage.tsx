@@ -15,6 +15,7 @@ import { BottomChrome } from "@/components/BottomChrome";
 import { useToast } from "@/components/Toast";
 import { shareInvite } from "@/lib/media";
 import { listStreaksForUser } from "@/lib/streaks";
+import { StoriesRail } from "@/components/StoriesRail";
 
 export function FriendsPage() {
   const t = useT();
@@ -150,6 +151,7 @@ export function FriendsPage() {
     <div className="app-root">
       <div className="page">
         <h2 style={{ marginBottom: 8 }}>{t("friends")}</h2>
+        <StoriesRail />
 
         {demoMode && <div className="banner">{t("setupBanner")}</div>}
 

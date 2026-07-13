@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCamera, type CaptureResult } from "@/hooks/useCamera";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -7,6 +7,8 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 export function CameraPage() {
   const t = useT();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const storyMode = params.get("story") === "1";
   const cam = useCamera();
   const [mode, setMode] = useState<"photo" | "video">("photo");
   const [busy, setBusy] = useState(false);
@@ -14,11 +16,12 @@ export function CameraPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   function goSend(cap: CaptureResult) {
+    const state = { ...cap, toStory: storyMode };
     // Photos → doodle/sticker editor; video → send directly
     if (cap.mediaType === "image") {
-      navigate("/edit", { state: cap });
+      navigate("/edit", { state });
     } else {
-      navigate("/send", { state: cap });
+      navigate("/send", { state });
     }
   }
 
@@ -143,6 +146,11 @@ export function CameraPage() {
       >
         <div className="brand" style={{ fontSize: 18 }}>
           Chat<span>Snap</span>
+          {storyMode ? (
+            <span style={{ fontSize: 12, marginLeft: 8, color: "var(--accent)" }}>
+              · {t("myStory")}
+            </span>
+          ) : null}
         </div>
         <LanguageToggle />
       </div>

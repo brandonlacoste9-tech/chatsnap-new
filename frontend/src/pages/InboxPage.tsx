@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { listInbox, listSentSnaps, type InboxItem, type SentItem } from "@/lib/snaps";
+import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 
 export function InboxPage() {
@@ -32,9 +33,29 @@ export function InboxPage() {
 
   useEffect(() => {
     void load();
-    if (!user?.id || demoMode) return;
-    const id = window.setInterval(() => void load(), 12000);
-    return () => window.clearInterval(id);
+    if (!user?.id || demoMode || !supabase) return;
+
+    const channel = supabase
+      .channel(`inbox-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "snap_recipients",
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        () => {
+          void load();
+        },
+      )
+      .subscribe();
+
+    const id = window.setInterval(() => void load(), 30000);
+    return () => {
+      window.clearInterval(id);
+      void supabase?.removeChannel(channel);
+    };
   }, [load, user?.id, demoMode]);
 
   return (
