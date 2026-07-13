@@ -11,9 +11,12 @@ import {
 import type { Profile } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 import { BottomChrome } from "@/components/BottomChrome";
+import { useToast } from "@/components/Toast";
+import { shareInvite } from "@/lib/media";
 
 export function FriendsPage() {
   const t = useT();
+  const { toast } = useToast();
   const { user, demoMode, profile } = useAuth();
   const [q, setQ] = useState("");
   const [found, setFound] = useState<Profile | null>(null);
@@ -88,8 +91,10 @@ export function FriendsPage() {
     setBusy(false);
     if (err) {
       setMsg(err);
+      toast(err, "err");
     } else {
       setMsg(t("pending") + " ✓");
+      toast(t("addedOk"), "ok");
       setFound(null);
       setQ("");
     }
@@ -100,8 +105,13 @@ export function FriendsPage() {
     setBusy(true);
     const err = await acceptFriendRequest(id);
     setBusy(false);
-    if (err) setMsg(err);
-    else setMsg("Friends! ✓");
+    if (err) {
+      setMsg(err);
+      toast(err, "err");
+    } else {
+      setMsg("Friends! ✓");
+      toast(t("friendsOk"), "ok");
+    }
     void reload();
   }
 
@@ -110,10 +120,17 @@ export function FriendsPage() {
     try {
       await navigator.clipboard.writeText(`@${myUsername}`);
       setCopied(true);
+      toast(`@${myUsername}`, "ok");
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       setMsg(`@${myUsername}`);
     }
+  }
+
+  async function onShareInvite() {
+    if (!myUsername) return;
+    const ok = await shareInvite(myUsername);
+    toast(ok ? t("inviteCopied") : t("shareInvite"), ok ? "ok" : "info");
   }
 
   const accepted = edges.filter((e) => e.status === "accepted");
@@ -168,10 +185,19 @@ export function FriendsPage() {
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ width: "100%" }}
+            onClick={() => void onShareInvite()}
+            disabled={!myUsername}
+          >
+            {t("shareInvite")}
+          </button>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
             Need a second person: open the app in another browser / phone,
             sign up, pick a username, then search @{myUsername || "you"} from
-            there (or search them from here).
+            there — or send your invite link.
           </p>
         </div>
 

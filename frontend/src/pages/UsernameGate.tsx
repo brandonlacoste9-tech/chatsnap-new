@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 
 export function UsernameGate() {
   const t = useT();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const returnTo =
+    (location.state as { returnTo?: string } | null)?.returnTo || "/app";
   const { profile, session, demoMode, setUsername } = useAuth();
   const [username, setU] = useState("");
   const [displayName, setD] = useState("");
@@ -12,7 +16,7 @@ export function UsernameGate() {
   const [busy, setBusy] = useState(false);
 
   if (!demoMode && !session) return <Navigate to="/auth" replace />;
-  if (profile?.username) return <Navigate to="/app" replace />;
+  if (profile?.username) return <Navigate to={returnTo} replace />;
 
   async function onSave(e: FormEvent) {
     e.preventDefault();
@@ -22,6 +26,7 @@ export function UsernameGate() {
     setBusy(false);
     if (err === "taken") setError(t("usernameTaken"));
     else if (err) setError(err);
+    else navigate(returnTo, { replace: true });
   }
 
   return (

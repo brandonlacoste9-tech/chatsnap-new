@@ -52,17 +52,28 @@ export async function sendSnap(opts: {
   return recErr?.message ?? null;
 }
 
+export async function countPendingInbox(myId: string): Promise<number> {
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from("snap_recipients")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_id", myId)
+    .eq("status", "pending");
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function listInbox(myId: string): Promise<InboxItem[]> {
   if (!supabase) return [];
 
   const now = new Date().toISOString();
-  const { data: recs } = await supabase
+  const { data: recs, error } = await supabase
     .from("snap_recipients")
     .select("id, snap_id, status, snaps(*)")
     .eq("recipient_id", myId)
     .eq("status", "pending");
 
-  if (!recs?.length) return [];
+  if (error || !recs?.length) return [];
 
   const items: InboxItem[] = [];
   const senderIds = new Set<string>();
@@ -109,6 +120,58 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
   }
 
   return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export type SentItem = {
+  snapId: string;
+  mediaType: "image" | "video";
+  durationSec: number;
+  createdAt: string;
+  recipients: { username: string | null; status: string }[];
+};
+
+/** Snaps you sent (for “opened?” feedback). */
+export async function listSentSnaps(myId: string): Promise<SentItem[]> {
+  if (!supabase) return [];
+  const { data: snaps, error } = await supabase
+    .from("snaps")
+    .select("id, media_type, duration_sec, created_at")
+    .eq("sender_id", myId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error || !snaps?.length) return [];
+
+  const ids = snaps.map((s) => s.id as string);
+  const { data: recs } = await supabase
+    .from("snap_recipients")
+    .select("snap_id, status, recipient_id")
+    .in("snap_id", ids);
+
+  const recipientIds = [
+    ...new Set((recs ?? []).map((r) => r.recipient_id as string)),
+  ];
+  const { data: profiles } = recipientIds.length
+    ? await supabase.from("profiles").select("id, username").in("id", recipientIds)
+    : { data: [] as { id: string; username: string | null }[] };
+  const uname = new Map(
+    (profiles as { id: string; username: string | null }[] | null)?.map((p) => [
+      p.id,
+      p.username,
+    ]),
+  );
+
+  return snaps.map((s) => ({
+    snapId: s.id as string,
+    mediaType: s.media_type as "image" | "video",
+    durationSec: s.duration_sec as number,
+    createdAt: s.created_at as string,
+    recipients: (recs ?? [])
+      .filter((r) => r.snap_id === s.id)
+      .map((r) => ({
+        username: uname.get(r.recipient_id as string) ?? null,
+        status: r.status as string,
+      })),
+  }));
 }
 
 export async function openSnap(recipientRowId: string): Promise<{

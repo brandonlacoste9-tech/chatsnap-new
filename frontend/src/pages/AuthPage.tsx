@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -7,6 +7,9 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 
 export function AuthPage() {
   const t = useT();
+  const location = useLocation();
+  const returnTo =
+    (location.state as { returnTo?: string } | null)?.returnTo || "/app";
   const { demoMode, profile, session, signIn, signUp, setUsername } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -15,13 +18,13 @@ export function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   // Demo: skip to username if no profile yet, else app
-  if (demoMode && profile?.username) return <Navigate to="/app" replace />;
+  if (demoMode && profile?.username) return <Navigate to={returnTo} replace />;
   if (demoMode && !profile?.username) {
     /* stay — show demo enter */
   } else if (session && profile?.username) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to={returnTo} replace />;
   } else if (session && !profile?.username) {
-    return <Navigate to="/username" replace />;
+    return <Navigate to="/username" replace state={{ returnTo }} />;
   }
 
   async function onDemoEnter() {

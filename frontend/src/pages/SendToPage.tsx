@@ -4,7 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listAcceptedFriends } from "@/lib/friends";
 import type { Profile } from "@/lib/supabase";
 import { sendSnap } from "@/lib/snaps";
+import { compressImage } from "@/lib/media";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/Toast";
 import type { CaptureResult } from "@/hooks/useCamera";
 
 const DURATIONS = [1, 3, 5, 7, 10];
@@ -13,11 +15,13 @@ export function SendToPage() {
   const t = useT();
   const nav = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const capture = location.state as CaptureResult | null;
   const { user, demoMode, profile } = useAuth();
   const [friends, setFriends] = useState<Profile[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [duration, setDuration] = useState(5);
+  const [caption, setCaption] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -31,7 +35,10 @@ export function SendToPage() {
       setFriends([]);
       return;
     }
-    void listAcceptedFriends(id).then(setFriends);
+    void listAcceptedFriends(id).then((list) => {
+      setFriends(list);
+      if (list.length === 1) setSelected(new Set([list[0].id]));
+    });
   }, [capture, user?.id, profile?.id, demoMode, nav]);
 
   function toggle(id: string) {
@@ -41,6 +48,10 @@ export function SendToPage() {
       else n.add(id);
       return n;
     });
+  }
+
+  function selectAll() {
+    setSelected(new Set(friends.map((f) => f.id)));
   }
 
   async function onSend() {
@@ -57,9 +68,19 @@ export function SendToPage() {
     if (!senderId) return;
     setBusy(true);
     setError(null);
+
+    let blob = capture.blob;
+    if (capture.mediaType === "image") {
+      try {
+        blob = await compressImage(capture.blob);
+      } catch {
+        /* keep original */
+      }
+    }
+
     const err = await sendSnap({
       senderId,
-      blob: capture.blob,
+      blob,
       mediaType: capture.mediaType,
       durationSec: duration,
       recipientIds: [...selected],
@@ -67,9 +88,16 @@ export function SendToPage() {
     setBusy(false);
     if (err) {
       setError(err);
+      toast(err, "err");
       return;
     }
     URL.revokeObjectURL(capture.previewUrl);
+    toast(
+      caption.trim()
+        ? `${t("sendOk")} “${caption.trim().slice(0, 40)}”`
+        : t("sendOk"),
+      "ok",
+    );
     nav("/app", { replace: true });
   }
 
@@ -101,6 +129,17 @@ export function SendToPage() {
         />
       )}
 
+      <label className="muted" style={{ display: "block", marginTop: 12 }}>
+        {t("caption")}
+      </label>
+      <input
+        className="field"
+        placeholder={t("captionPlaceholder")}
+        value={caption}
+        maxLength={80}
+        onChange={(e) => setCaption(e.target.value)}
+      />
+
       <p className="muted">{t("duration")}</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {DURATIONS.map((d) => (
@@ -116,11 +155,42 @@ export function SendToPage() {
         ))}
       </div>
 
-      <p className="muted">{t("selectFriends")}</p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 8,
+        }}
+      >
+        <p className="muted" style={{ margin: 0 }}>
+          {t("selectFriends")}
+        </p>
+        {friends.length > 1 && (
+          <button type="button" className="chip" onClick={selectAll}>
+            {t("selectAll")}
+          </button>
+        )}
+      </div>
+
       {demoMode && <div className="banner">{t("setupBanner")}</div>}
+
       {!demoMode && friends.length === 0 && (
-        <p className="muted">{t("noFriends")}</p>
+        <div className="list-row" style={{ flexDirection: "column", gap: 10 }}>
+          <p className="muted" style={{ margin: 0 }}>
+            {t("noFriends")}
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ width: "100%" }}
+            onClick={() => nav("/friends")}
+          >
+            {t("goFriends")}
+          </button>
+        </div>
       )}
+
       <div className="stack" style={{ maxWidth: "none" }}>
         {friends.map((f) => (
           <button
@@ -132,6 +202,7 @@ export function SendToPage() {
               textAlign: "left",
               cursor: "pointer",
               borderColor: selected.has(f.id) ? "var(--accent)" : undefined,
+              background: selected.has(f.id) ? "#1a1800" : undefined,
             }}
             onClick={() => toggle(f.id)}
           >
@@ -142,7 +213,9 @@ export function SendToPage() {
               <strong>@{f.username}</strong>
               <div className="muted">{f.display_name}</div>
             </div>
-            {selected.has(f.id) ? "✓" : ""}
+            <span style={{ fontSize: 18, color: "var(--accent)" }}>
+              {selected.has(f.id) ? "✓" : ""}
+            </span>
           </button>
         ))}
       </div>
@@ -153,10 +226,10 @@ export function SendToPage() {
         type="button"
         className="btn btn-primary"
         style={{ width: "100%", marginTop: 12 }}
-        disabled={busy}
+        disabled={busy || friends.length === 0}
         onClick={() => void onSend()}
       >
-        {t("send")}
+        {busy ? t("loading") : `${t("send")} (${selected.size})`}
       </button>
     </div>
   );

@@ -233,7 +233,7 @@ export function CameraPage() {
             ? cam.recording
               ? t("stop")
               : t("record")
-            : "SNAP"}
+            : t("snapLabel")}
         </button>
 
         <button
@@ -249,7 +249,7 @@ export function CameraPage() {
           }}
           onClick={() => fileRef.current?.click()}
         >
-          {t("photo")} / gallery
+          {t("gallery")}
         </button>
       </div>
 
