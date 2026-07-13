@@ -38,13 +38,17 @@ npm run dev
 
 ## Netlify settings
 
+Site: **https://chatsnap-app.netlify.app**
+
 | Field | Value |
 |--------|--------|
-| Base directory | `frontend` |
-| Build command | `npm run build` |
-| Publish directory | `frontend/dist` (or `dist` when base is `frontend`) |
+| Base directory | *(empty / repo root)* |
+| Build command | `npm --prefix frontend run build` |
+| Publish directory | `frontend/dist` |
 | Runtime / Node | **20** |
 | Functions | not required |
+
+These match `netlify.toml` (already on `main`).
 
 Environment variables on Netlify:
 
