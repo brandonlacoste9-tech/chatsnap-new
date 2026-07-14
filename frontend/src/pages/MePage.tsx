@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import { inviteUrl, shareInvite } from "@/lib/media";
 import { ensureNotifyPermission } from "@/lib/notifications";
 import { setRestrictedMode } from "@/lib/safety";
+import { resetOnboarding } from "@/lib/onboarding";
 
 export function MePage() {
   const t = useT();
@@ -242,6 +243,18 @@ export function MePage() {
           type="button"
           className="btn btn-ghost"
           style={{ marginTop: 16, width: "100%" }}
+          onClick={() => {
+            resetOnboarding();
+            nav("/onboarding", { replace: true });
+          }}
+        >
+          {t("replayOnboarding")}
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ marginTop: 8, width: "100%" }}
           onClick={() => {
             void signOut().then(() => nav("/auth", { replace: true }));
           }}

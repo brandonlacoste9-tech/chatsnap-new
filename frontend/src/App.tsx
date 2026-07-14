@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BottomChrome } from "@/components/BottomChrome";
 import { InboxWatcher } from "@/components/InboxWatcher";
 import { useT } from "@/lib/i18n";
+import { isOnboardingDone } from "@/lib/onboarding";
 
 // Heavy / secondary screens — code-split
 const AuthPage = lazy(() =>
@@ -61,6 +62,9 @@ const MapPage = lazy(() =>
 const StickersPage = lazy(() =>
   import("@/pages/StickersPage").then((m) => ({ default: m.StickersPage })),
 );
+const OnboardingPage = lazy(() =>
+  import("@/pages/OnboardingPage").then((m) => ({ default: m.OnboardingPage })),
+);
 const SwipeShell = lazy(() =>
   import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
 );
@@ -78,7 +82,14 @@ function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
-function RequireUser({ children }: { children: ReactNode }) {
+function RequireUser({
+  children,
+  allowOnboarding = false,
+}: {
+  children: ReactNode;
+  /** When true, skip onboarding redirect (the onboarding route itself). */
+  allowOnboarding?: boolean;
+}) {
   const { ready, session, profile, demoMode } = useAuth();
   const t = useT();
   if (!ready) {
@@ -90,10 +101,16 @@ function RequireUser({ children }: { children: ReactNode }) {
   }
   if (demoMode) {
     if (!profile?.username) return <Navigate to="/auth" replace />;
+    if (!allowOnboarding && !isOnboardingDone()) {
+      return <Navigate to="/onboarding" replace />;
+    }
     return children;
   }
   if (!session) return <Navigate to="/auth" replace />;
   if (!profile?.username) return <Navigate to="/username" replace />;
+  if (!allowOnboarding && !isOnboardingDone()) {
+    return <Navigate to="/onboarding" replace />;
+  }
   return children;
 }
 
@@ -178,6 +195,16 @@ export default function App() {
             <Lazy>
               <UsernameGate />
             </Lazy>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <RequireUser allowOnboarding>
+              <Lazy>
+                <OnboardingPage />
+              </Lazy>
+            </RequireUser>
           }
         />
         <Route path="/add/:username" element={<AddFriendGate />} />

@@ -175,6 +175,26 @@ export const fr: Dict = {
   report: "Signaler",
   reportPrompt: "Pourquoi signales-tu cet utilisateur ?",
   reportSent: "Signalement envoyé. Merci de garder la ruche safe.",
+  skip: "Passer",
+  back: "Retour",
+  onbWelcomeTitle: "Des snaps pour ta gang",
+  onbWelcomeBody:
+    "Privé par défaut. Bilingue EN/FR. Pas de pubs, pas de machine FOMO — juste ton monde.",
+  onbPoint1: "Notes fantômes & souvenirs que tu contrôles",
+  onbPoint2: "Stories pour les amis · Spotlight si tu veux le public",
+  onbPoint3: "Chat, groupes, carte opt-in, gel de série",
+  onbFriendTitle: "Ajoute quelqu'un",
+  onbFriendBody:
+    "Partage ton lien d'invitation ou cherche un @pseudo. C'est mieux à deux.",
+  onbSearchFriends: "Chercher des amis",
+  onbSnapTitle: "Envoie ton premier snap",
+  onbSnapBody:
+    "Ouvre la caméra, doodle si tu veux, puis envoie à un ami, Mon Story ou Spotlight.",
+  onbSnapTip:
+    "Astuce : laisse « Sauver aux Souvenirs » coché pour garder ton snap.",
+  onbOpenCamera: "Ouvrir la caméra",
+  onbExplore: "Explorer l'app",
+  replayOnboarding: "Revoir le tour",
   installApp: "Installer ChatSnap",
   install: "Installer",
   notNow: "Pas maintenant",

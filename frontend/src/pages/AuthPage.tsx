@@ -4,12 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { isOnboardingDone } from "@/lib/onboarding";
 
 export function AuthPage() {
   const t = useT();
   const location = useLocation();
-  const returnTo =
-    (location.state as { returnTo?: string } | null)?.returnTo || "/app";
+  const deepReturn =
+    (location.state as { returnTo?: string } | null)?.returnTo || null;
+  const home = deepReturn || (isOnboardingDone() ? "/app" : "/onboarding");
   const { demoMode, profile, session, signIn, signUp, setUsername } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -17,14 +19,20 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Demo: skip to username if no profile yet, else app
-  if (demoMode && profile?.username) return <Navigate to={returnTo} replace />;
+  // Demo: skip to username if no profile yet, else app/onboarding
+  if (demoMode && profile?.username) return <Navigate to={home} replace />;
   if (demoMode && !profile?.username) {
     /* stay — show demo enter */
   } else if (session && profile?.username) {
-    return <Navigate to={returnTo} replace />;
+    return <Navigate to={home} replace />;
   } else if (session && !profile?.username) {
-    return <Navigate to="/username" replace state={{ returnTo }} />;
+    return (
+      <Navigate
+        to="/username"
+        replace
+        state={deepReturn ? { returnTo: deepReturn } : undefined}
+      />
+    );
   }
 
   async function onDemoEnter() {
