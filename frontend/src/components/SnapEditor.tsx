@@ -5,7 +5,7 @@ import { listMyStickers, type UserSticker } from "@/lib/stickers";
 
 const EMOJI = ["🔥", "😂", "❤️", "💀", "✨", "🇨🇦", "👀", "🎉", "❄️", "👑", "⚜️", "☕"];
 
-type Mode = "draw" | "sticker" | "custom";
+type Mode = "draw" | "text" | "sticker" | "custom";
 
 export type SnapEditorProps = {
   imageUrl: string;
@@ -28,6 +28,7 @@ export function SnapEditor({
   const [sticker, setSticker] = useState(EMOJI[0]);
   const [custom, setCustom] = useState<UserSticker[]>([]);
   const [activeCustom, setActiveCustom] = useState<UserSticker | null>(null);
+  const [textDraft, setTextDraft] = useState("");
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
   const baseRef = useRef<HTMLImageElement | null>(null);
@@ -75,6 +76,21 @@ export function SnapEditor({
     if (!canvas || !ctx) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const p = pos(e);
+
+    if (mode === "text") {
+      const raw = textDraft.trim() || t("textDefault");
+      const size = Math.max(28, canvas.width * 0.055);
+      ctx.font = `800 ${size}px system-ui, "Segoe UI", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(4, size * 0.12);
+      ctx.strokeStyle = "#000";
+      ctx.fillStyle = color;
+      ctx.strokeText(raw, p.x, p.y);
+      ctx.fillText(raw, p.x, p.y);
+      return;
+    }
 
     if (mode === "sticker") {
       const size = Math.max(32, canvas.width * 0.08);
@@ -209,6 +225,13 @@ export function SnapEditor({
           </button>
           <button
             type="button"
+            className={`chip ${mode === "text" ? "active" : ""}`}
+            onClick={() => setMode("text")}
+          >
+            Aa {t("textTool")}
+          </button>
+          <button
+            type="button"
             className={`chip ${mode === "sticker" ? "active" : ""}`}
             onClick={() => setMode("sticker")}
           >
@@ -226,7 +249,7 @@ export function SnapEditor({
           </button>
         </div>
 
-        {mode === "draw" && (
+        {(mode === "draw" || mode === "text") && (
           <div style={{ display: "flex", gap: 8 }}>
             {["#FFFC00", "#ff2d95", "#00f0ff", "#ffffff", "#000000"].map((c) => (
               <button
@@ -243,6 +266,21 @@ export function SnapEditor({
                 aria-label={c}
               />
             ))}
+          </div>
+        )}
+
+        {mode === "text" && (
+          <div className="stack" style={{ maxWidth: "none", gap: 6 }}>
+            <input
+              className="field"
+              placeholder={t("textToolHint")}
+              value={textDraft}
+              maxLength={48}
+              onChange={(e) => setTextDraft(e.target.value)}
+            />
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+              {t("textToolTap")}
+            </p>
           </div>
         )}
 

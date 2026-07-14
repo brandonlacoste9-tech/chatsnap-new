@@ -9,13 +9,14 @@ import {
   listFriendPins,
   publishLocation,
   setShowOnMap,
+  shareUntilFromDuration,
   type FriendPin,
+  type ShareDuration,
 } from "@/lib/location";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import { BottomChrome } from "@/components/BottomChrome";
 
-// Fix default marker icons in bundlers
 const pinIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl:
@@ -49,7 +50,7 @@ function FitBounds({ pins }: { pins: FriendPin[] }) {
   return null;
 }
 
-/** Opt-in friends map — privacy-first (Snap Map without the creep). */
+/** Opt-in friends map with ghost (timed) share + coarse city mode. */
 export function MapPage() {
   const t = useT();
   const { toast } = useToast();
@@ -58,7 +59,9 @@ export function MapPage() {
   const [pins, setPins] = useState<FriendPin[]>([]);
   const [myPin, setMyPin] = useState<FriendPin | null>(null);
   const [busy, setBusy] = useState(false);
-  const [center] = useState<[number, number]>([45.5, -73.57]); // Montréal default
+  const [duration, setDuration] = useState<ShareDuration>("1h");
+  const [coarse, setCoarse] = useState(false);
+  const [center] = useState<[number, number]>([45.5, -73.57]);
 
   const load = useCallback(async () => {
     if (!user?.id || demoMode) return;
@@ -73,27 +76,12 @@ export function MapPage() {
     return () => window.clearInterval(id);
   }, [load]);
 
-  async function toggleMap(on: boolean) {
+  async function shareNow(dur: ShareDuration = duration) {
     if (!user?.id) return;
-    setBusy(true);
-    const err = await setShowOnMap(user.id, on);
-    if (err) {
-      toast(err, "err");
-      setBusy(false);
+    if (dur === "off") {
+      await toggleMap(false);
       return;
     }
-    setEnabled(on);
-    if (on) await shareNow();
-    else {
-      setMyPin(null);
-      toast(t("mapOff"), "ok");
-    }
-    setBusy(false);
-    void load();
-  }
-
-  async function shareNow() {
-    if (!user?.id) return;
     if (!navigator.geolocation) {
       toast(t("noGeo"), "err");
       return;
@@ -102,14 +90,30 @@ export function MapPage() {
     await new Promise<void>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
+          // ensure profile flag on
+          await setShowOnMap(user.id, true);
+          setEnabled(true);
           const err = await publishLocation(
             user.id,
             pos.coords.latitude,
             pos.coords.longitude,
             pos.coords.accuracy,
+            {
+              shareUntil: shareUntilFromDuration(dur),
+              coarse,
+            },
           );
           if (err) toast(err, "err");
-          else toast(t("mapUpdated"), "ok");
+          else {
+            toast(
+              dur === "1h"
+                ? t("mapGhost1h")
+                : dur === "evening"
+                  ? t("mapGhostEvening")
+                  : t("mapUpdated"),
+              "ok",
+            );
+          }
           setBusy(false);
           void load();
           resolve();
@@ -119,9 +123,28 @@ export function MapPage() {
           setBusy(false);
           resolve();
         },
-        { enableHighAccuracy: true, timeout: 12000 },
+        { enableHighAccuracy: !coarse, timeout: 12000 },
       );
     });
+  }
+
+  async function toggleMap(on: boolean) {
+    if (!user?.id) return;
+    setBusy(true);
+    if (!on) {
+      const err = await setShowOnMap(user.id, false);
+      if (err) toast(err, "err");
+      else {
+        setEnabled(false);
+        setMyPin(null);
+        toast(t("mapOff"), "ok");
+      }
+      setBusy(false);
+      void load();
+      return;
+    }
+    setBusy(false);
+    await shareNow(duration === "off" ? "1h" : duration);
   }
 
   const allPins = [
@@ -144,14 +167,49 @@ export function MapPage() {
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
             {t("mapHint")}
           </p>
+
+          <p className="muted" style={{ margin: "10px 0 4px", fontSize: 12 }}>
+            {t("mapShareHowLong")}
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {(
+              [
+                ["1h", t("mapGhost1hBtn")],
+                ["evening", t("mapGhostEveningBtn")],
+                ["on", t("mapShareOn")],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className={`chip ${duration === key ? "active" : ""}`}
+                disabled={busy || demoMode}
+                onClick={() => {
+                  setDuration(key);
+                  void shareNow(key);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`chip ${!enabled ? "active" : ""}`}
+              disabled={busy || demoMode}
+              onClick={() => void toggleMap(false)}
+            >
+              {t("mapOff")}
+            </button>
+          </div>
+
           <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <button
               type="button"
-              className={`chip ${enabled ? "active" : ""}`}
+              className={`chip ${coarse ? "active" : ""}`}
               disabled={busy || demoMode}
-              onClick={() => void toggleMap(!enabled)}
+              onClick={() => setCoarse((c) => !c)}
             >
-              {enabled ? t("mapOn") : t("mapShare")}
+              {coarse ? t("mapCoarseOn") : t("mapCoarseOff")}
             </button>
             {enabled && (
               <button
@@ -164,6 +222,11 @@ export function MapPage() {
               </button>
             )}
           </div>
+          {myPin?.share_until && (
+            <p className="muted" style={{ margin: "8px 0 0", fontSize: 12 }}>
+              {t("mapUntil")}: {new Date(myPin.share_until).toLocaleString()}
+            </p>
+          )}
         </div>
 
         <div style={{ flex: 1, minHeight: 280, position: "relative" }}>
@@ -195,6 +258,12 @@ export function MapPage() {
                         ? t("you")
                         : `@${p.profile?.username ?? "…"}`}
                     </strong>
+                    {p.coarse && (
+                      <>
+                        <br />
+                        <span style={{ fontSize: 11 }}>{t("mapCoarseBadge")}</span>
+                      </>
+                    )}
                     <br />
                     <span style={{ fontSize: 12 }}>
                       {new Date(p.updated_at).toLocaleString()}

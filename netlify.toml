@@ -1,11 +1,16 @@
 [build]
-  command = "npm --prefix frontend run build"
+  command = "npm install && npm --prefix frontend run build"
   publish = "frontend/dist"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# SPA fallback
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["web-push"]
+
+# SPA fallback (Netlify serves functions before this)
 [[redirects]]
   from = "/*"
   to = "/index.html"

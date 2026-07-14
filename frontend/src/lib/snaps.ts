@@ -1,5 +1,6 @@
 import { supabase, type Profile } from "@/lib/supabase";
 import { bumpStreakOnSend } from "@/lib/streaks";
+import { notifyUsersPush } from "@/lib/push";
 
 export type InboxItem = {
   recipientId: string;
@@ -62,8 +63,14 @@ export async function sendSnap(opts: {
   const { error: recErr } = await supabase.from("snap_recipients").insert(rows);
   if (recErr) return recErr.message;
 
-  // Fire-and-forget streaks
+  // Fire-and-forget streaks + web push
   void bumpStreakOnSend(opts.senderId, opts.recipientIds).catch(() => {});
+  void notifyUsersPush({
+    userIds: opts.recipientIds,
+    title: "ChatSnap",
+    body: "New snap 👻",
+    url: "/app/inbox",
+  });
   return null;
 }
 

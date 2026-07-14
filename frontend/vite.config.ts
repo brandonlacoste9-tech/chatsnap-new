@@ -83,6 +83,8 @@ export default defineConfig({
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//, /^\/offline\.html$/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
+        // Push + notificationclick handlers
+        importScripts: ["push-handler.js"],
         runtimeCaching: [
           {
             // Never cache Supabase / Mux / signed media

@@ -7,6 +7,11 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/components/Toast";
 import { inviteUrl, shareInvite } from "@/lib/media";
 import { ensureNotifyPermission } from "@/lib/notifications";
+import {
+  isPushConfigured,
+  subscribeWebPush,
+  unsubscribeWebPush,
+} from "@/lib/push";
 import { setRestrictedMode } from "@/lib/safety";
 import { resetOnboarding } from "@/lib/onboarding";
 
@@ -25,6 +30,7 @@ export function MePage() {
   const [notifState, setNotifState] = useState(() =>
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
+  const [pushOn, setPushOn] = useState(false);
 
   const username = profile?.username ?? "";
   const link = username ? inviteUrl(username) : "";
@@ -43,6 +49,33 @@ export function MePage() {
       typeof Notification !== "undefined" ? Notification.permission : "denied",
     );
     toast(ok ? t("notifsOn") : t("notifsOff"), ok ? "ok" : "info");
+  }
+
+  async function onPush() {
+    if (!user?.id) return;
+    if (!isPushConfigured()) {
+      toast(t("pushUnavailable"), "info");
+      return;
+    }
+    setBusy(true);
+    if (pushOn) {
+      const err = await unsubscribeWebPush(user.id);
+      setBusy(false);
+      if (err) toast(err, "err");
+      else {
+        setPushOn(false);
+        toast(t("pushOff"), "ok");
+      }
+      return;
+    }
+    const err = await subscribeWebPush(user.id);
+    setBusy(false);
+    if (err) toast(err, "err");
+    else {
+      setPushOn(true);
+      setNotifState("granted");
+      toast(t("pushOk"), "ok");
+    }
   }
 
   async function onSaveVibe() {
@@ -233,6 +266,15 @@ export function MePage() {
           onClick={() => void onNotifs()}
         >
           {notifState === "granted" ? t("notifsOn") : t("enableNotifs")}
+        </button>
+        <button
+          type="button"
+          className={`btn ${pushOn ? "btn-primary" : "btn-ghost"}`}
+          style={{ width: "100%", marginTop: 8 }}
+          disabled={busy || demoMode}
+          onClick={() => void onPush()}
+        >
+          {pushOn ? t("pushEnabled") : t("pushEnable")}
         </button>
 
         <p className="muted" style={{ fontSize: 13, marginTop: 20 }}>

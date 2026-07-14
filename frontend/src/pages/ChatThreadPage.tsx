@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   listThread,
@@ -10,6 +11,11 @@ import {
   type ChatMessage,
 } from "@/lib/messages";
 import { supabase } from "@/lib/supabase";
+import {
+  broadcastTyping,
+  closeTypingChannel,
+  openTypingChannel,
+} from "@/lib/typing";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import { BottomChrome } from "@/components/BottomChrome";
@@ -53,6 +59,10 @@ export function ChatThreadPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const typingChRef = useRef<RealtimeChannel | null>(null);
+  const typingTimerRef = useRef<number | undefined>(undefined);
+  const lastTypedRef = useRef(0);
+  const [friendTyping, setFriendTyping] = useState(false);
 
   const myId = user?.id;
 
@@ -109,12 +119,34 @@ export function ChatThreadPage() {
       )
       .subscribe();
 
+    // Typing indicator channel
+    typingChRef.current = openTypingChannel(myId, friendId, () => {
+      setFriendTyping(true);
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = window.setTimeout(
+        () => setFriendTyping(false),
+        2500,
+      );
+    });
+
     const poll = window.setInterval(() => void load(), 15000);
     return () => {
       window.clearInterval(poll);
       void supabase?.removeChannel(channel);
+      closeTypingChannel(typingChRef.current);
+      typingChRef.current = null;
+      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
     };
   }, [load, myId, friendId]);
+
+  function onTextChange(value: string) {
+    setText(value);
+    if (!myId || !value.trim()) return;
+    const now = Date.now();
+    if (now - lastTypedRef.current < 900) return;
+    lastTypedRef.current = now;
+    void broadcastTyping(typingChRef.current, myId);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -410,6 +442,20 @@ export function ChatThreadPage() {
           <div ref={bottomRef} />
         </div>
 
+        {friendTyping && (
+          <div
+            className="muted"
+            style={{
+              padding: "4px 14px",
+              fontSize: 12,
+              fontStyle: "italic",
+              borderTop: "1px solid #1a1a1a",
+            }}
+          >
+            @{friendName} {t("isTyping")}
+          </div>
+        )}
+
         {replySnap && (
           <div
             style={{
@@ -492,7 +538,7 @@ export function ChatThreadPage() {
             style={{ flex: 1 }}
             placeholder={t("typeMessage")}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => onTextChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
