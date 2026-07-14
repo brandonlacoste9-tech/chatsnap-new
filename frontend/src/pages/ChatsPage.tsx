@@ -94,6 +94,20 @@ export function ChatsPage() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <strong>@{p.friend.username}</strong>
+                {p.friend.vibe_status && (
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--accent)",
+                      fontWeight: 600,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    ✦ {p.friend.vibe_status}
+                  </div>
+                )}
                 <div
                   className="muted"
                   style={{
@@ -103,6 +117,7 @@ export function ChatsPage() {
                     whiteSpace: "nowrap",
                   }}
                 >
+                  {p.lastMessage?.ephemeral ? "👻 " : ""}
                   {previewText(p)}
                 </div>
               </div>

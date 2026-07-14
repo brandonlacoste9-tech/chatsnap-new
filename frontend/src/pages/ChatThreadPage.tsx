@@ -29,6 +29,7 @@ export function ChatThreadPage() {
   const [recording, setRecording] = useState(false);
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [ephemeral, setEphemeral] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -103,7 +104,7 @@ export function ChatThreadPage() {
   async function onSendText() {
     if (!myId || !friendId || !text.trim()) return;
     setBusy(true);
-    const err = await sendTextMessage(myId, friendId, text);
+    const err = await sendTextMessage(myId, friendId, text, { ephemeral });
     setBusy(false);
     if (err) {
       toast(err, "err");
@@ -173,7 +174,7 @@ export function ChatThreadPage() {
       setBusy(false);
       return;
     }
-    const err = await sendAudioMessage(myId, friendId, blob);
+    const err = await sendAudioMessage(myId, friendId, blob, { ephemeral });
     setBusy(false);
     if (err) toast(err, "err");
     else void load();
@@ -250,11 +251,30 @@ export function ChatThreadPage() {
                   alignSelf: mine ? "flex-end" : "flex-start",
                   maxWidth: "80%",
                   background: mine ? "#2a2600" : "var(--bg-elevated)",
-                  border: `1px solid ${mine ? "var(--accent)" : "var(--border)"}`,
+                  border: `1px solid ${
+                    m.ephemeral
+                      ? "#a855f7"
+                      : mine
+                        ? "var(--accent)"
+                        : "var(--border)"
+                  }`,
                   borderRadius: 16,
                   padding: "10px 12px",
+                  opacity: m.ephemeral ? 0.95 : 1,
                 }}
               >
+                {m.ephemeral && (
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "#c4b5fd",
+                      fontWeight: 700,
+                      marginBottom: 4,
+                    }}
+                  >
+                    👻 {t("ephemeral")}
+                  </div>
+                )}
                 {m.media_type === "text" && (
                   <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                     {m.body}
@@ -334,8 +354,22 @@ export function ChatThreadPage() {
             borderTop: "1px solid var(--border)",
             background: "#0a0a0a",
             alignItems: "center",
+            flexWrap: "wrap",
           }}
         >
+          <button
+            type="button"
+            className={`chip ${ephemeral ? "active" : ""}`}
+            title={t("ephemeralHint")}
+            onClick={() => setEphemeral((e) => !e)}
+            style={
+              ephemeral
+                ? { background: "#6b21a8", color: "#fff", borderColor: "#a855f7" }
+                : undefined
+            }
+          >
+            👻
+          </button>
           <button
             type="button"
             className="chip"

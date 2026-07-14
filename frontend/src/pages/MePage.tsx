@@ -11,10 +11,11 @@ import { ensureNotifyPermission } from "@/lib/notifications";
 export function MePage() {
   const t = useT();
   const { locale } = useI18n();
-  const { profile, demoMode, signOut } = useAuth();
+  const { profile, demoMode, signOut, setVibeStatus } = useAuth();
   const nav = useNavigate();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
+  const [vibe, setVibe] = useState(profile?.vibe_status ?? "");
   const [notifState, setNotifState] = useState(() =>
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
@@ -38,9 +39,29 @@ export function MePage() {
     toast(ok ? t("notifsOn") : t("notifsOff"), ok ? "ok" : "info");
   }
 
+  async function onSaveVibe() {
+    setBusy(true);
+    const err = await setVibeStatus(vibe);
+    setBusy(false);
+    if (err) toast(err, "err");
+    else toast(t("vibeSaved"), "ok");
+  }
+
   return (
     <div className="app-root">
       <div className="page">
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: 1,
+            color: "var(--accent)",
+            marginBottom: 8,
+            textTransform: "uppercase",
+          }}
+        >
+          {t("brandLine")}
+        </div>
         <h2>{t("me")}</h2>
         <div className="list-row">
           <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>
@@ -52,7 +73,34 @@ export function MePage() {
               {t("signedInAs")} {profile?.display_name ?? "—"}
               {demoMode ? ` · ${t("demoMode")}` : ""}
             </div>
+            {profile?.vibe_status && (
+              <div style={{ color: "var(--accent)", fontSize: 13, marginTop: 4 }}>
+                ✦ {profile.vibe_status}
+              </div>
+            )}
           </div>
+        </div>
+
+        <h3>{t("vibeStatus")}</h3>
+        <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>
+          {t("vibeHint")}
+        </p>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            className="field"
+            placeholder={t("vibePlaceholder")}
+            value={vibe}
+            maxLength={60}
+            onChange={(e) => setVibe(e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy}
+            onClick={() => void onSaveVibe()}
+          >
+            {t("save")}
+          </button>
         </div>
 
         {username && (

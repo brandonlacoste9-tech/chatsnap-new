@@ -17,6 +17,9 @@ export type Profile = {
   display_name: string | null;
   avatar_url: string | null;
   locale: string | null;
+  vibe_status?: string | null;
+  vibe_updated_at?: string | null;
+  show_on_map?: boolean;
   created_at?: string;
 };
 

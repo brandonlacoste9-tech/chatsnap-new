@@ -14,10 +14,11 @@ function yesterdayUtc(): string {
   return d.toISOString().slice(0, 10);
 }
 
-export type StreakInfo = {
-  streakCount: number;
-  lastActiveDate: string;
-};
+function daysAgoUtc(n: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+}
 
 /** Bump streak when you send a snap to a friend (once per UTC day). */
 export async function bumpStreakOnSend(
@@ -50,9 +51,19 @@ export async function bumpStreakOnSend(
     }
 
     const last = row.last_active_date as string;
-    if (last === today) continue; // already counted today
+    if (last === today) continue;
 
-    const next = last === yday ? (row.streak_count as number) + 1 : 1;
+    const freezeUntil = row.freeze_until as string | null;
+    let next: number;
+    if (last === yday) {
+      next = (row.streak_count as number) + 1;
+    } else if (freezeUntil && freezeUntil >= today && last >= daysAgoUtc(3)) {
+      // Missed day(s) but freeze active — keep streak
+      next = row.streak_count as number;
+    } else {
+      next = 1;
+    }
+
     await supabase
       .from("friendship_streaks")
       .update({
@@ -73,7 +84,7 @@ export async function getStreak(
   const [user_low, user_high] = pair(myId, friendId);
   const { data } = await supabase
     .from("friendship_streaks")
-    .select("streak_count, last_active_date")
+    .select("streak_count, last_active_date, freeze_until")
     .eq("user_low", user_low)
     .eq("user_high", user_high)
     .maybeSingle();
@@ -81,9 +92,10 @@ export async function getStreak(
   const last = data.last_active_date as string;
   const today = utcDateString();
   const yday = yesterdayUtc();
-  // Streak broken if last activity older than yesterday
-  if (last !== today && last !== yday) return 0;
-  return (data.streak_count as number) ?? 0;
+  const freezeUntil = data.freeze_until as string | null;
+  if (last === today || last === yday) return (data.streak_count as number) ?? 0;
+  if (freezeUntil && freezeUntil >= today) return (data.streak_count as number) ?? 0;
+  return 0;
 }
 
 export async function listStreaksForUser(
@@ -100,10 +112,53 @@ export async function listStreaksForUser(
   const yday = yesterdayUtc();
   for (const row of data) {
     const last = row.last_active_date as string;
-    if (last !== today && last !== yday) continue;
-    const other =
-      row.user_low === myId ? row.user_high : row.user_low;
+    const freezeUntil = row.freeze_until as string | null;
+    const alive =
+      last === today ||
+      last === yday ||
+      (freezeUntil != null && freezeUntil >= today);
+    if (!alive) continue;
+    const other = row.user_low === myId ? row.user_high : row.user_low;
     map.set(other as string, row.streak_count as number);
   }
   return map;
+}
+
+/** One free freeze per 7 days — protects streak if you miss a day. */
+export async function activateStreakFreeze(
+  myId: string,
+  friendId: string,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  const [user_low, user_high] = pair(myId, friendId);
+  const { data: row } = await supabase
+    .from("friendship_streaks")
+    .select("*")
+    .eq("user_low", user_low)
+    .eq("user_high", user_high)
+    .maybeSingle();
+  if (!row) return "No streak yet — send a snap first";
+
+  const lastFreeze = row.last_freeze_at
+    ? new Date(row.last_freeze_at as string).getTime()
+    : 0;
+  const week = 7 * 24 * 60 * 60 * 1000;
+  if (lastFreeze && Date.now() - lastFreeze < week) {
+    return "Freeze already used this week";
+  }
+
+  const until = new Date();
+  until.setUTCDate(until.getUTCDate() + 1);
+  const freeze_until = until.toISOString().slice(0, 10);
+
+  const { error } = await supabase
+    .from("friendship_streaks")
+    .update({
+      freeze_until,
+      last_freeze_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_low", user_low)
+    .eq("user_high", user_high);
+  return error?.message ?? null;
 }

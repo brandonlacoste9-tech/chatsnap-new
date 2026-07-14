@@ -24,6 +24,7 @@ type AuthValue = {
     username: string,
     displayName?: string,
   ) => Promise<string | null>;
+  setVibeStatus: (vibe: string) => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -155,6 +156,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [demoMode, fetchProfile, session?.user],
   );
 
+  const setVibeStatus = useCallback(
+    async (vibe: string) => {
+      const clean = vibe.trim().slice(0, 60);
+      if (demoMode) {
+        if (profile) {
+          const p = { ...profile, vibe_status: clean || null };
+          localStorage.setItem(DEMO_PROFILE_KEY, JSON.stringify(p));
+          setProfile(p);
+        }
+        return null;
+      }
+      if (!supabase || !session?.user) return "Not signed in";
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          vibe_status: clean || null,
+          vibe_updated_at: new Date().toISOString(),
+        })
+        .eq("id", session.user.id);
+      if (error) return error.message;
+      await fetchProfile(session.user.id);
+      return null;
+    },
+    [demoMode, profile, session?.user, fetchProfile],
+  );
+
   const value = useMemo<AuthValue>(
     () => ({
       ready,
@@ -167,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
       setUsername,
+      setVibeStatus,
     }),
     [
       ready,
@@ -178,6 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
       setUsername,
+      setVibeStatus,
     ],
   );
 

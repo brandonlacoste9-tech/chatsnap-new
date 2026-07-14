@@ -9,6 +9,8 @@ export type ChatMessage = {
   media_type: "text" | "audio" | "image";
   created_at: string;
   read_at: string | null;
+  ephemeral?: boolean;
+  expires_at?: string | null;
 };
 
 export type ChatPreview = {
@@ -17,10 +19,17 @@ export type ChatPreview = {
   unread: number;
 };
 
+function isExpiredEphemeral(m: ChatMessage): boolean {
+  if (!m.ephemeral) return false;
+  if (m.expires_at && m.expires_at < new Date().toISOString()) return true;
+  // Vanish after recipient has read
+  if (m.read_at && m.ephemeral) return true;
+  return false;
+}
+
 export async function listChatPreviews(myId: string): Promise<ChatPreview[]> {
   if (!supabase) return [];
 
-  // Accepted friends
   const { data: friendships } = await supabase
     .from("friendships")
     .select("*")
@@ -51,6 +60,8 @@ export async function listChatPreviews(myId: string): Promise<ChatPreview[]> {
   const unreadByFriend = new Map<string, number>();
 
   for (const m of (msgs as ChatMessage[] | null) ?? []) {
+    if (isExpiredEphemeral(m) && m.read_at) continue;
+    if (m.expires_at && m.expires_at < new Date().toISOString()) continue;
     const other = m.sender_id === myId ? m.recipient_id : m.sender_id;
     if (!lastByFriend.has(other)) lastByFriend.set(other, m);
     if (m.recipient_id === myId && !m.read_at) {
@@ -70,7 +81,6 @@ export async function listChatPreviews(myId: string): Promise<ChatPreview[]> {
     })
     .filter(Boolean) as ChatPreview[];
 
-  // Sort by last message time
   previews.sort((a, b) => {
     const ta = a.lastMessage?.created_at ?? "";
     const tb = b.lastMessage?.created_at ?? "";
@@ -94,22 +104,37 @@ export async function listThread(
     .order("created_at", { ascending: true })
     .limit(200);
   if (error) return [];
-  return (data as ChatMessage[]) ?? [];
+
+  const now = new Date().toISOString();
+  const list = ((data as ChatMessage[]) ?? []).filter((m) => {
+    if (m.expires_at && m.expires_at < now) return false;
+    // Ephemeral already read by me as recipient → hide after view session
+    // Keep until markThreadRead purges
+    return true;
+  });
+  return list;
 }
 
 export async function sendTextMessage(
   myId: string,
   friendId: string,
   body: string,
+  opts?: { ephemeral?: boolean },
 ): Promise<string | null> {
   if (!supabase) return "No backend";
   const text = body.trim();
   if (!text) return "Empty message";
+  const ephemeral = Boolean(opts?.ephemeral);
+  const expires_at = ephemeral
+    ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    : null;
   const { error } = await supabase.from("messages").insert({
     sender_id: myId,
     recipient_id: friendId,
     body: text.slice(0, 2000),
     media_type: "text",
+    ephemeral,
+    expires_at,
   });
   return error?.message ?? null;
 }
@@ -118,6 +143,7 @@ export async function sendAudioMessage(
   myId: string,
   friendId: string,
   blob: Blob,
+  opts?: { ephemeral?: boolean },
 ): Promise<string | null> {
   if (!supabase) return "No backend";
   const id = crypto.randomUUID();
@@ -128,12 +154,18 @@ export async function sendAudioMessage(
   });
   if (upErr) return upErr.message;
 
+  const ephemeral = Boolean(opts?.ephemeral);
+  const expires_at = ephemeral
+    ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    : null;
   const { error } = await supabase.from("messages").insert({
     sender_id: myId,
     recipient_id: friendId,
     media_path: path,
     media_type: "audio",
     body: null,
+    ephemeral,
+    expires_at,
   });
   return error?.message ?? null;
 }
@@ -143,17 +175,30 @@ export async function markThreadRead(
   friendId: string,
 ): Promise<void> {
   if (!supabase) return;
+  // Mark read
+  const { data: unread } = await supabase
+    .from("messages")
+    .select("id, ephemeral")
+    .eq("recipient_id", myId)
+    .eq("sender_id", friendId)
+    .is("read_at", null);
+
   await supabase
     .from("messages")
     .update({ read_at: new Date().toISOString() })
     .eq("recipient_id", myId)
     .eq("sender_id", friendId)
     .is("read_at", null);
+
+  // Purge ephemeral after read (unique power)
+  for (const m of unread ?? []) {
+    if (m.ephemeral) {
+      await supabase.rpc("purge_ephemeral_message", { mid: m.id });
+    }
+  }
 }
 
-export async function signedMediaUrl(
-  path: string,
-): Promise<string | null> {
+export async function signedMediaUrl(path: string): Promise<string | null> {
   if (!supabase) return null;
   const { data } = await supabase.storage
     .from("snaps")

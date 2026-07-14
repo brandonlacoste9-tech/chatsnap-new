@@ -148,6 +148,15 @@ export const en = {
   you: "You",
   betterThanSnap:
     "Bilingual EN⇄FR · Memories vault · opt-in map · no dark patterns. Built for your crew.",
+  brandLine: "Not Snap. Ours.",
+  vibeStatus: "Vibe",
+  vibeHint: "One line your friends see in chat — mood, not metrics.",
+  vibePlaceholder: "ex: café + rain in MTL ☕",
+  vibeSaved: "Vibe updated",
+  ephemeral: "Ghost note",
+  ephemeralHint: "Vanishes after they read it (or in 24h)",
+  freezeHint: "Tap to freeze streak 24h (1× / week) — no FOMO panic",
+  freezeOn: "Streak freeze on · you can miss a day",
 } as const;
 
 export type MessageKey = keyof typeof en;

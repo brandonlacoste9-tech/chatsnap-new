@@ -150,4 +150,13 @@ export const fr: Dict = {
   you: "Toi",
   betterThanSnap:
     "Bilingue EN⇄FR · Souvenirs · carte opt-in · zéro dark pattern. Pour ta gang.",
+  brandLine: "Pas Snap. À nous.",
+  vibeStatus: "Vibe",
+  vibeHint: "Une ligne que tes amis voient dans le chat — l'humeur, pas les stats.",
+  vibePlaceholder: "ex: café + pluie à MTL ☕",
+  vibeSaved: "Vibe mise à jour",
+  ephemeral: "Note fantôme",
+  ephemeralHint: "Disparaît après lecture (ou en 24 h)",
+  freezeHint: "Gèle la série 24 h (1× / semaine) — zéro panique FOMO",
+  freezeOn: "Gel de série actif · tu peux manquer une journée",
 };

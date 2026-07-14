@@ -14,7 +14,7 @@ import { useT } from "@/lib/i18n";
 import { BottomChrome } from "@/components/BottomChrome";
 import { useToast } from "@/components/Toast";
 import { shareInvite } from "@/lib/media";
-import { listStreaksForUser } from "@/lib/streaks";
+import { activateStreakFreeze, listStreaksForUser } from "@/lib/streaks";
 import { StoriesRail } from "@/components/StoriesRail";
 import { blockUser } from "@/lib/blocks";
 
@@ -355,15 +355,25 @@ export function FriendsPage() {
               <div className="muted">{e.profile.display_name}</div>
             </div>
             {(streaks.get(e.profile.id) ?? 0) > 0 && (
-              <span
+              <button
+                type="button"
+                className="chip"
+                title={t("freezeHint")}
                 style={{
                   fontWeight: 800,
                   color: "var(--accent)",
-                  marginRight: 8,
+                  marginRight: 4,
+                }}
+                onClick={() => {
+                  if (!myId) return;
+                  void activateStreakFreeze(myId, e.profile.id).then((err) => {
+                    if (err) toast(err, "err");
+                    else toast(t("freezeOn"), "ok");
+                  });
                 }}
               >
-                🔥 {streaks.get(e.profile.id)}
-              </span>
+                🔥 {streaks.get(e.profile.id)} ❄️
+              </button>
             )}
             <button
               type="button"
