@@ -142,35 +142,54 @@ export function InboxPage() {
       {tab === "sent" && (
         <div className="stack" style={{ maxWidth: "none" }}>
           {sent.map((s) => (
-            <div key={s.snapId} className="list-row">
-              <div className="avatar">{s.mediaType === "video" ? "🎬" : "📷"}</div>
+            <button
+              key={s.snapId}
+              type="button"
+              className="list-row"
+              style={{ width: "100%", textAlign: "left", cursor: "pointer" }}
+              onClick={() => nav(`/sent/${s.snapId}`)}
+            >
+              <div className="avatar">
+                {s.mediaType === "video" ? "🎬" : "📷"}
+              </div>
               <div style={{ flex: 1 }}>
                 <strong>
-                  {s.mediaType === "video" ? t("video") : t("photo")} ·{" "}
-                  {s.durationSec}
-                  {t("seconds")}
+                  {s.mediaType === "video" ? t("video") : t("photo")}
+                  {s.durationSec === 0
+                    ? ` · ${t("durationOpen")}`
+                    : ` · ${s.durationSec}${t("seconds")}`}
                 </strong>
                 <div className="muted" style={{ fontSize: 13 }}>
-                  {s.recipients.map((r) => (
-                    <span key={r.username ?? Math.random()} style={{ marginRight: 8 }}>
-                      @{r.username ?? "?"}{" "}
-                      {r.status === "pending" || r.status === "opened"
-                        ? r.status === "pending"
-                          ? `· ${t("waitingOpen")}`
-                          : `· ${t("theyOpened")}`
-                        : r.status === "consumed"
-                          ? `· ${t("theyOpened")}`
-                          : ""}
-                    </span>
-                  ))}
+                  {s.caption
+                    ? `“${s.caption.slice(0, 32)}” · `
+                    : ""}
+                  {s.recipients.length === 0
+                    ? t("noRecipients")
+                    : s.recipients.map((r, i) => (
+                        <span key={`${r.username}-${i}`} style={{ marginRight: 8 }}>
+                          @{r.username ?? "?"}{" "}
+                          {r.status === "pending"
+                            ? `· ${t("waitingOpen")}`
+                            : r.status === "opened" || r.status === "consumed"
+                              ? `· ${t("theyOpened")}`
+                              : ""}
+                        </span>
+                      ))}
                   {s.reactions.length > 0 && (
                     <span style={{ marginLeft: 6 }}>
                       {s.reactions.join(" ")}
                     </span>
                   )}
                 </div>
+                <div
+                  className="muted"
+                  style={{ fontSize: 11, marginTop: 2, color: "var(--accent)" }}
+                >
+                  {t("tapToViewSent")}
+                </div>
               </div>
-            </div>
+              <span style={{ color: "var(--accent)", fontWeight: 800 }}>›</span>
+            </button>
           ))}
         </div>
       )}

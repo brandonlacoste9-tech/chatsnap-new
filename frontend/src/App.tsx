@@ -25,6 +25,11 @@ const SendToPage = lazy(() =>
 const ViewerPage = lazy(() =>
   import("@/pages/ViewerPage").then((m) => ({ default: m.ViewerPage })),
 );
+const SentViewerPage = lazy(() =>
+  import("@/pages/SentViewerPage").then((m) => ({
+    default: m.SentViewerPage,
+  })),
+);
 const AddFriendPage = lazy(() =>
   import("@/pages/AddFriendPage").then((m) => ({ default: m.AddFriendPage })),
 );
@@ -369,6 +374,14 @@ export default function App() {
           element={
             <RU>
               <ViewerPage />
+            </RU>
+          }
+        />
+        <Route
+          path="/sent/:snapId"
+          element={
+            <RU>
+              <SentViewerPage />
             </RU>
           }
         />
