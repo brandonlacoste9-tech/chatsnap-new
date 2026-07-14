@@ -3,6 +3,8 @@
   --bg-elevated: #141414;
   --accent: #fffc00;
   --accent-ink: #0a0a0a;
+  --glow: #fffc00;
+  --edge-rgb: 255, 252, 0;
   --text: #ffffff;
   --muted: #a3a3a3;
   --danger: #ff4d6d;
@@ -10,6 +12,7 @@
   --border: #2a2a2a;
   --radius: 16px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
   font-family:
     "Segoe UI",
     system-ui,
@@ -37,6 +40,89 @@ body,
   height: 100%;
   background: var(--bg);
   color: var(--text);
+}
+
+/* ——— Edge lighting (ambient frame) ——— */
+#root {
+  position: relative;
+  isolation: isolate;
+}
+
+html[data-edge="soft"] body::before,
+html[data-edge="pulse"] body::before,
+html[data-edge="rainbow"] body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  border-radius: 0;
+  padding: 2px;
+  box-sizing: border-box;
+  /* inset glow frame */
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--edge-rgb), 0.35),
+    inset 0 0 28px 2px rgba(var(--edge-rgb), 0.22),
+    inset 0 0 60px 4px rgba(var(--edge-rgb), 0.08);
+}
+
+html[data-edge="soft"] body::before {
+  opacity: 0.9;
+}
+
+html[data-edge="pulse"] body::before {
+  animation: edge-pulse 2.4s ease-in-out infinite;
+}
+
+html[data-edge="rainbow"] body::before {
+  box-shadow: none;
+  background: linear-gradient(
+    120deg,
+    #ff2d95,
+    #fffc00,
+    #00f0ff,
+    #3dff9a,
+    #a855f7,
+    #ff2d95
+  );
+  background-size: 300% 300%;
+  animation: edge-rainbow 6s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 3px;
+}
+
+@keyframes edge-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    box-shadow:
+      inset 0 0 0 1px rgba(var(--edge-rgb), 0.25),
+      inset 0 0 20px 2px rgba(var(--edge-rgb), 0.12),
+      inset 0 0 40px 4px rgba(var(--edge-rgb), 0.04);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      inset 0 0 0 1.5px rgba(var(--edge-rgb), 0.65),
+      inset 0 0 36px 4px rgba(var(--edge-rgb), 0.35),
+      inset 0 0 72px 8px rgba(var(--edge-rgb), 0.12);
+  }
+}
+
+@keyframes edge-rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }
 
 /* Installed PWA: slightly tighter overscroll bounce */
@@ -536,4 +622,61 @@ a.btn {
 .more-sheet-icon {
   font-size: 1.45rem;
   line-height: 1;
+}
+
+.more-theme-block {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.more-theme-heading {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.more-theme-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.more-palette-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.more-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #222;
+  cursor: pointer;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: transform 0.12s ease;
+}
+
+.more-swatch:active {
+  transform: scale(0.94);
+}
+
+.more-swatch.active {
+  border-color: #fff;
+}
+
+.more-swatch-check {
+  font-size: 14px;
+  font-weight: 900;
+  color: #000;
+  text-shadow: 0 0 2px #fff;
+}
+
+.more-edge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

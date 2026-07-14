@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useT } from "@/lib/i18n";
+import { PALETTES, type EdgeMode, type PaletteId } from "@/lib/theme";
 
 export type MoreItem = {
   path: string;
@@ -33,6 +35,25 @@ const ITEMS: MoreItem[] = [
   },
 ];
 
+const EDGE_MODES: { id: EdgeMode; labelKey: "edgeOff" | "edgeSoft" | "edgePulse" | "edgeRainbow" }[] =
+  [
+    { id: "off", labelKey: "edgeOff" },
+    { id: "soft", labelKey: "edgeSoft" },
+    { id: "pulse", labelKey: "edgePulse" },
+    { id: "rainbow", labelKey: "edgeRainbow" },
+  ];
+
+const PALETTE_LABELS: Record<PaletteId, string> = {
+  sunny: "Sunny",
+  hotpink: "Hot pink",
+  cyan: "Cyan",
+  lime: "Lime",
+  orange: "Orange",
+  purple: "Purple",
+  ice: "Ice",
+  rose: "Rose",
+};
+
 export function MoreSheet({
   open,
   onClose,
@@ -43,6 +64,7 @@ export function MoreSheet({
   const t = useT();
   const nav = useNavigate();
   const { profile } = useAuth();
+  const { paletteId, edgeMode, setPaletteId, setEdgeMode } = useTheme();
   const restricted = Boolean(profile?.restricted_mode);
 
   useEffect(() => {
@@ -79,6 +101,61 @@ export function MoreSheet({
             {t("close")}
           </button>
         </div>
+
+        {/* Colour palette */}
+        <section className="more-theme-block" aria-labelledby="more-palette">
+          <h3 id="more-palette" className="more-theme-heading">
+            🎨 {t("colorPalette")}
+          </h3>
+          <p className="muted more-theme-hint">{t("colorPaletteHint")}</p>
+          <div className="more-palette-row" role="listbox" aria-label={t("colorPalette")}>
+            {PALETTES.map((p) => {
+              const active = paletteId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  title={PALETTE_LABELS[p.id]}
+                  className={`more-swatch ${active ? "active" : ""}`}
+                  style={{
+                    background: `linear-gradient(135deg, ${p.accent} 0%, ${p.glow} 100%)`,
+                    boxShadow: active
+                      ? `0 0 0 2px #000, 0 0 0 4px ${p.accent}`
+                      : undefined,
+                  }}
+                  onClick={() => setPaletteId(p.id)}
+                >
+                  <span className="more-swatch-check" aria-hidden>
+                    {active ? "✓" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Edge lighting */}
+        <section className="more-theme-block" aria-labelledby="more-edge">
+          <h3 id="more-edge" className="more-theme-heading">
+            💡 {t("edgeLighting")}
+          </h3>
+          <p className="muted more-theme-hint">{t("edgeLightingHint")}</p>
+          <div className="more-edge-row">
+            {EDGE_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={`chip ${edgeMode === m.id ? "active" : ""}`}
+                onClick={() => setEdgeMode(m.id)}
+              >
+                {t(m.labelKey)}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <div className="more-sheet-grid">
           {visible.map((it) => (
             <button
