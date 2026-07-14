@@ -238,6 +238,47 @@ export async function listSentSnaps(myId: string): Promise<SentItem[]> {
   }));
 }
 
+/** Sender permanently erases a snap (storage + row; recipients cascade). */
+export async function deleteSentSnap(
+  snapId: string,
+  myId: string,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  const { data: snap, error: gErr } = await supabase
+    .from("snaps")
+    .select("id, media_path, sender_id")
+    .eq("id", snapId)
+    .eq("sender_id", myId)
+    .maybeSingle();
+  if (gErr) return gErr.message;
+  if (!snap) return "Not found";
+
+  const path = snap.media_path as string;
+  if (path) {
+    await supabase.storage.from("snaps").remove([path]);
+  }
+  const { error } = await supabase
+    .from("snaps")
+    .delete()
+    .eq("id", snapId)
+    .eq("sender_id", myId);
+  return error?.message ?? null;
+}
+
+/** Recipient dismisses an inbox snap without opening (erase from inbox). */
+export async function dismissInboxSnap(
+  recipientRowId: string,
+  myId: string,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  const { error } = await supabase
+    .from("snap_recipients")
+    .delete()
+    .eq("id", recipientRowId)
+    .eq("recipient_id", myId);
+  return error?.message ?? null;
+}
+
 /**
  * Sender re-views their own snap (does not mark consumed for recipients).
  */

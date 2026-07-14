@@ -1,13 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { listInbox, listSentSnaps, type InboxItem, type SentItem } from "@/lib/snaps";
+import {
+  deleteSentSnap,
+  dismissInboxSnap,
+  listInbox,
+  listSentSnaps,
+  type InboxItem,
+  type SentItem,
+} from "@/lib/snaps";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
+import { useToast } from "@/components/Toast";
+import { SwipeToErase } from "@/components/SwipeToErase";
 
 export function InboxPage() {
   const t = useT();
   const nav = useNavigate();
+  const { toast } = useToast();
   const { user, demoMode } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [sent, setSent] = useState<SentItem[]>([]);
@@ -58,6 +68,26 @@ export function InboxPage() {
     };
   }, [load, user?.id, demoMode]);
 
+  async function eraseInbox(it: InboxItem) {
+    if (!user?.id) return;
+    const err = await dismissInboxSnap(it.recipientId, user.id);
+    if (err) toast(err, "err");
+    else {
+      setItems((prev) => prev.filter((x) => x.recipientId !== it.recipientId));
+      toast(t("snapErased"), "ok");
+    }
+  }
+
+  async function eraseSent(s: SentItem) {
+    if (!user?.id) return;
+    const err = await deleteSentSnap(s.snapId, user.id);
+    if (err) toast(err, "err");
+    else {
+      setSent((prev) => prev.filter((x) => x.snapId !== s.snapId));
+      toast(t("snapErased"), "ok");
+    }
+  }
+
   return (
     <div className="page">
       <div
@@ -73,6 +103,10 @@ export function InboxPage() {
           {t("refresh")}
         </button>
       </div>
+
+      <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+        {t("swipeEraseHint")}
+      </p>
 
       <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
         <button
@@ -100,37 +134,53 @@ export function InboxPage() {
       )}
 
       {tab === "inbox" && (
-        <div className="stack" style={{ maxWidth: "none" }}>
+        <div className="stack" style={{ maxWidth: "none", gap: 8 }}>
           {items.map((it) => (
-            <button
+            <SwipeToErase
               key={it.recipientId}
-              type="button"
-              className="list-row"
-              style={{ width: "100%", textAlign: "left", cursor: "pointer" }}
-              onClick={() => nav(`/view/${it.recipientId}`)}
+              onErase={() => eraseInbox(it)}
+              label={t("swipeErase")}
             >
-              <div
-                className="avatar"
+              <button
+                type="button"
+                className="list-row"
                 style={{
-                  borderColor: "var(--accent)",
-                  boxShadow: "0 0 0 2px var(--accent)",
+                  width: "100%",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  borderRadius: 0,
+                  border: "none",
+                  borderBottom: "1px solid var(--border)",
                 }}
+                onClick={() => nav(`/view/${it.recipientId}`)}
               >
-                {(it.sender.username?.[0] ?? "?").toUpperCase()}
-              </div>
-              <div style={{ flex: 1 }}>
-                <strong>
-                  {t("from")} @{it.sender.username ?? "…"}
-                </strong>
-                <div className="muted">
-                  {it.mediaType === "video" ? "🎬" : "📷"} · {it.durationSec}
-                  {t("seconds")}
-                  {it.caption ? ` · “${it.caption.slice(0, 28)}”` : ""} ·{" "}
-                  {t("viewing")}
+                <div
+                  className="avatar"
+                  style={{
+                    borderColor: "var(--accent)",
+                    boxShadow: "0 0 0 2px var(--accent)",
+                  }}
+                >
+                  {(it.sender.username?.[0] ?? "?").toUpperCase()}
                 </div>
-              </div>
-              <span style={{ color: "var(--accent)", fontWeight: 800 }}>●</span>
-            </button>
+                <div style={{ flex: 1 }}>
+                  <strong>
+                    {t("from")} @{it.sender.username ?? "…"}
+                  </strong>
+                  <div className="muted">
+                    {it.mediaType === "video" ? "🎬" : "📷"} ·{" "}
+                    {it.durationSec === 0
+                      ? t("durationOpen")
+                      : `${it.durationSec}${t("seconds")}`}
+                    {it.caption ? ` · “${it.caption.slice(0, 28)}”` : ""} ·{" "}
+                    {t("viewing")}
+                  </div>
+                </div>
+                <span style={{ color: "var(--accent)", fontWeight: 800 }}>
+                  ●
+                </span>
+              </button>
+            </SwipeToErase>
           ))}
         </div>
       )}
@@ -140,56 +190,76 @@ export function InboxPage() {
       )}
 
       {tab === "sent" && (
-        <div className="stack" style={{ maxWidth: "none" }}>
+        <div className="stack" style={{ maxWidth: "none", gap: 8 }}>
           {sent.map((s) => (
-            <button
+            <SwipeToErase
               key={s.snapId}
-              type="button"
-              className="list-row"
-              style={{ width: "100%", textAlign: "left", cursor: "pointer" }}
-              onClick={() => nav(`/sent/${s.snapId}`)}
+              onErase={() => eraseSent(s)}
+              label={t("swipeErase")}
             >
-              <div className="avatar">
-                {s.mediaType === "video" ? "🎬" : "📷"}
-              </div>
-              <div style={{ flex: 1 }}>
-                <strong>
-                  {s.mediaType === "video" ? t("video") : t("photo")}
-                  {s.durationSec === 0
-                    ? ` · ${t("durationOpen")}`
-                    : ` · ${s.durationSec}${t("seconds")}`}
-                </strong>
-                <div className="muted" style={{ fontSize: 13 }}>
-                  {s.caption
-                    ? `“${s.caption.slice(0, 32)}” · `
-                    : ""}
-                  {s.recipients.length === 0
-                    ? t("noRecipients")
-                    : s.recipients.map((r, i) => (
-                        <span key={`${r.username}-${i}`} style={{ marginRight: 8 }}>
-                          @{r.username ?? "?"}{" "}
-                          {r.status === "pending"
-                            ? `· ${t("waitingOpen")}`
-                            : r.status === "opened" || r.status === "consumed"
-                              ? `· ${t("theyOpened")}`
-                              : ""}
-                        </span>
-                      ))}
-                  {s.reactions.length > 0 && (
-                    <span style={{ marginLeft: 6 }}>
-                      {s.reactions.join(" ")}
-                    </span>
-                  )}
+              <button
+                type="button"
+                className="list-row"
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  borderRadius: 0,
+                  border: "none",
+                  borderBottom: "1px solid var(--border)",
+                }}
+                onClick={() => nav(`/sent/${s.snapId}`)}
+              >
+                <div className="avatar">
+                  {s.mediaType === "video" ? "🎬" : "📷"}
                 </div>
-                <div
-                  className="muted"
-                  style={{ fontSize: 11, marginTop: 2, color: "var(--accent)" }}
-                >
-                  {t("tapToViewSent")}
+                <div style={{ flex: 1 }}>
+                  <strong>
+                    {s.mediaType === "video" ? t("video") : t("photo")}
+                    {s.durationSec === 0
+                      ? ` · ${t("durationOpen")}`
+                      : ` · ${s.durationSec}${t("seconds")}`}
+                  </strong>
+                  <div className="muted" style={{ fontSize: 13 }}>
+                    {s.caption ? `“${s.caption.slice(0, 32)}” · ` : ""}
+                    {s.recipients.length === 0
+                      ? t("noRecipients")
+                      : s.recipients.map((r, i) => (
+                          <span
+                            key={`${r.username}-${i}`}
+                            style={{ marginRight: 8 }}
+                          >
+                            @{r.username ?? "?"}{" "}
+                            {r.status === "pending"
+                              ? `· ${t("waitingOpen")}`
+                              : r.status === "opened" ||
+                                  r.status === "consumed"
+                                ? `· ${t("theyOpened")}`
+                                : ""}
+                          </span>
+                        ))}
+                    {s.reactions.length > 0 && (
+                      <span style={{ marginLeft: 6 }}>
+                        {s.reactions.join(" ")}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="muted"
+                    style={{
+                      fontSize: 11,
+                      marginTop: 2,
+                      color: "var(--accent)",
+                    }}
+                  >
+                    {t("tapToViewSent")} · {t("swipeEraseHintShort")}
+                  </div>
                 </div>
-              </div>
-              <span style={{ color: "var(--accent)", fontWeight: 800 }}>›</span>
-            </button>
+                <span style={{ color: "var(--accent)", fontWeight: 800 }}>
+                  ›
+                </span>
+              </button>
+            </SwipeToErase>
           ))}
         </div>
       )}
