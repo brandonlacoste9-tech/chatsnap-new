@@ -71,6 +71,9 @@ const LandingPage = lazy(() =>
 const LegalPage = lazy(() =>
   import("@/pages/LegalPage").then((m) => ({ default: m.LegalPage })),
 );
+const HivesPage = lazy(() =>
+  import("@/pages/HivesPage").then((m) => ({ default: m.HivesPage })),
+);
 const SwipeShell = lazy(() =>
   import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
 );
@@ -291,6 +294,14 @@ export default function App() {
           element={
             <RU>
               <MePage />
+            </RU>
+          }
+        />
+        <Route
+          path="/hives"
+          element={
+            <RU>
+              <HivesPage />
             </RU>
           }
         />

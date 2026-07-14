@@ -1,7 +1,9 @@
-import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useT } from "@/lib/i18n";
 import { useInboxCount } from "@/hooks/useInboxCount";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { isMorePath, MoreSheet } from "@/components/MoreSheet";
 
 const linkStyle = ({ isActive }: { isActive: boolean }) =>
   ({
@@ -13,6 +15,10 @@ const linkStyle = ({ isActive }: { isActive: boolean }) =>
     fontWeight: isActive ? 700 : 500,
     padding: "6px 2px",
     position: "relative" as const,
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontFamily: "inherit",
   }) as const;
 
 function Badge({ n }: { n: number }) {
@@ -39,59 +45,97 @@ function Badge({ n }: { n: number }) {
   );
 }
 
+/**
+ * Primary nav: Friends · Chats · Camera · Inbox · More
+ * Secondary destinations live in the More sheet (Map, Discover, Me, …).
+ */
 export function BottomChrome() {
   const t = useT();
+  const loc = useLocation();
   const { count: snapCount } = useInboxCount();
   const { count: chatCount } = useUnreadMessages();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = isMorePath(loc.pathname);
 
   return (
-    <nav
-      style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: "flex",
-        background: "#000",
-        borderTop: "1px solid var(--border)",
-        paddingBottom: "var(--safe-bottom)",
-        zIndex: 40,
-      }}
-    >
-      <NavLink to="/map" style={linkStyle}>
-        🗺️
-        <div>{t("snapMap").split(" ")[0]}</div>
-      </NavLink>
-      <NavLink to="/friends" style={linkStyle}>
-        👥
-        <div>{t("friends")}</div>
-      </NavLink>
-      <NavLink to="/chats" style={linkStyle}>
-        <span style={{ position: "relative", display: "inline-block" }}>
-          💬
-          <Badge n={chatCount} />
-        </span>
-        <div>{t("chats")}</div>
-      </NavLink>
-      <NavLink to="/app" end style={linkStyle}>
-        📷
-        <div>{t("camera")}</div>
-      </NavLink>
-      <NavLink to="/discover" style={linkStyle}>
-        ✨
-        <div>{t("discover")}</div>
-      </NavLink>
-      <NavLink to="/app/inbox" style={linkStyle}>
-        <span style={{ position: "relative", display: "inline-block" }}>
-          📬
-          <Badge n={snapCount} />
-        </span>
-        <div>{t("inbox")}</div>
-      </NavLink>
-      <NavLink to="/me" style={linkStyle}>
-        🙂
-        <div>{t("me")}</div>
-      </NavLink>
-    </nav>
+    <>
+      <nav
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "flex-end",
+          background: "#000",
+          borderTop: "1px solid var(--border)",
+          paddingBottom: "var(--safe-bottom)",
+          zIndex: 40,
+        }}
+        aria-label={t("mainNav")}
+      >
+        <NavLink to="/friends" style={linkStyle}>
+          👥
+          <div>{t("friends")}</div>
+        </NavLink>
+
+        <NavLink to="/chats" style={linkStyle}>
+          <span style={{ position: "relative", display: "inline-block" }}>
+            💬
+            <Badge n={chatCount} />
+          </span>
+          <div>{t("chats")}</div>
+        </NavLink>
+
+        <NavLink
+          to="/app"
+          end
+          style={({ isActive }) => ({
+            ...linkStyle({ isActive }),
+            marginTop: -10,
+          })}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--accent)",
+              color: "#000",
+              fontSize: 22,
+              boxShadow: "0 0 0 3px #000, 0 0 0 5px var(--accent)",
+            }}
+            aria-hidden
+          >
+            📷
+          </span>
+          <div style={{ marginTop: 2 }}>{t("camera")}</div>
+        </NavLink>
+
+        <NavLink to="/app/inbox" style={linkStyle}>
+          <span style={{ position: "relative", display: "inline-block" }}>
+            📬
+            <Badge n={snapCount} />
+          </span>
+          <div>{t("inbox")}</div>
+        </NavLink>
+
+        <button
+          type="button"
+          style={linkStyle({ isActive: moreActive || moreOpen })}
+          aria-expanded={moreOpen}
+          aria-haspopup="dialog"
+          onClick={() => setMoreOpen(true)}
+        >
+          ☰
+          <div>{t("more")}</div>
+        </button>
+      </nav>
+
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
+    </>
   );
 }

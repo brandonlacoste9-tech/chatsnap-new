@@ -437,3 +437,103 @@ a.btn {
 .landing-footer-nav a:hover {
   color: var(--accent);
 }
+
+/* ——— More sheet (bottom nav overflow) ——— */
+.more-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.more-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+.more-sheet-panel {
+  position: relative;
+  z-index: 1;
+  background: #111;
+  border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  padding: 8px 16px calc(16px + var(--safe-bottom));
+  max-height: min(72vh, 520px);
+  overflow: auto;
+  animation: more-sheet-up 0.2s ease;
+}
+
+@keyframes more-sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.more-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: #333;
+  margin: 4px auto 12px;
+}
+
+.more-sheet-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.more-sheet-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.more-sheet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.more-sheet-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.more-sheet-item:active {
+  transform: scale(0.98);
+}
+
+.more-sheet-item:hover {
+  border-color: var(--accent);
+}
+
+.more-sheet-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+}
