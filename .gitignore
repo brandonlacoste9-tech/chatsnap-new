@@ -6,11 +6,17 @@ frontend/node_modules/
 frontend/dist/
 dist/
 
-# Env
+# Env & secrets (never commit)
 .env
-.env.local
+.env.*
+!.env.example
 frontend/.env
-frontend/.env.local
+frontend/.env.*
+!frontend/.env.example
+.local/
+*.pem
+*service_role*
+*credentials*
 
 # Brainstorm companion
 .superpowers/
@@ -20,5 +26,7 @@ frontend/.env.local
 .DS_Store
 Thumbs.db
 
-# Local Netlify folder
-.netlify
+# Local Netlify / Supabase CLI state
+.netlify/
+supabase/.temp/
+supabase/.branches/
