@@ -214,6 +214,16 @@ export function MePage() {
           {t("betterThanSnap")}
         </p>
 
+        {typeof window !== "undefined" &&
+          (window.matchMedia("(display-mode: standalone)").matches ||
+            Boolean(
+              (navigator as Navigator & { standalone?: boolean }).standalone,
+            )) && (
+            <div className="banner" style={{ marginTop: 12 }}>
+              ✓ {t("installed")}
+            </div>
+          )}
+
         <h3 style={{ marginTop: 20 }}>{t("enableNotifs")}</h3>
         <button
           type="button"

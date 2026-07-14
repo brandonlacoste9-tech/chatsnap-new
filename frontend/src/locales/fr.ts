@@ -175,4 +175,11 @@ export const fr: Dict = {
   report: "Signaler",
   reportPrompt: "Pourquoi signales-tu cet utilisateur ?",
   reportSent: "Signalement envoyé. Merci de garder la ruche safe.",
+  installApp: "Installer ChatSnap",
+  install: "Installer",
+  notNow: "Pas maintenant",
+  installIosHint: "Partager → Sur l'écran d'accueil pour le full app.",
+  updateAvailable: "Nouvelle version ChatSnap prête",
+  updateNow: "Mettre à jour",
+  installed: "App installée",
 };

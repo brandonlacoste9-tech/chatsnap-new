@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0A0A0A" />
+    <title>ChatSnap — Offline</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0a;
+        color: #fff;
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 8px;
+      }
+      h1 span {
+        color: #fffc00;
+      }
+      p {
+        color: #a3a3a3;
+        max-width: 280px;
+        margin: 0 auto 20px;
+        line-height: 1.4;
+      }
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 20px;
+        font-weight: 700;
+        background: #fffc00;
+        color: #0a0a0a;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Chat<span>Snap</span></h1>
+      <p>You're offline. Reconnect to send snaps and chat with your crew.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </div>
+  </body>
+</html>

@@ -39,6 +39,25 @@ body,
   color: var(--text);
 }
 
+/* Installed PWA: slightly tighter overscroll bounce */
+html {
+  overscroll-behavior-y: none;
+}
+
+/* Standalone mode tweak */
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  input,
+  textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
 button,
 input {
   font: inherit;

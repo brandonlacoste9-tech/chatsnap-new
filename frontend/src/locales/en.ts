@@ -172,6 +172,13 @@ export const en = {
   report: "Report",
   reportPrompt: "Why are you reporting this user?",
   reportSent: "Report sent. Thanks for keeping the hive safe.",
+  installApp: "Install ChatSnap",
+  install: "Install",
+  notNow: "Not now",
+  installIosHint: "Share → Add to Home Screen for the full app feel.",
+  updateAvailable: "New ChatSnap version ready",
+  updateNow: "Update",
+  installed: "Running as installed app",
 } as const;
 
 export type MessageKey = keyof typeof en;

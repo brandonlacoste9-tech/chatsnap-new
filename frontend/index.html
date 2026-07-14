@@ -2,14 +2,72 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
     />
-    <meta name="theme-color" content="#0A0A0A" />
-    <meta name="description" content="ChatSnap — fun bilingual snaps EN/FR" />
+
     <title>ChatSnap</title>
+    <meta
+      name="description"
+      content="Not Snap. Ours. Bilingual EN/FR snaps, stories, and chat for your crew."
+    />
+    <meta name="application-name" content="ChatSnap" />
+    <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0A0A0A" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- PWA / iOS -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ChatSnap" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#FFFC00" />
+
+    <!-- Open Graph (share install link) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ChatSnap" />
+    <meta property="og:title" content="ChatSnap — Not Snap. Ours." />
+    <meta
+      property="og:description"
+      content="Bilingual EN/FR snaps for your crew. Friends first."
+    />
+    <meta property="og:image" content="/pwa-512.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ChatSnap" />
+    <meta
+      name="twitter:description"
+      content="Bilingual EN/FR snaps for your crew."
+    />
+
+    <style>
+      /* Instant black shell before React hydrates (install splash feel) */
+      html,
+      body {
+        margin: 0;
+        background: #0a0a0a;
+        color: #fff;
+      }
+      #root:empty {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #root:empty::after {
+        content: "ChatSnap";
+        font-family: system-ui, sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #fffc00;
+        opacity: 0.9;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
