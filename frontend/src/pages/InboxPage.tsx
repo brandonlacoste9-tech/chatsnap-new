@@ -163,6 +163,11 @@ export function InboxPage() {
                           : ""}
                     </span>
                   ))}
+                  {s.reactions.length > 0 && (
+                    <span style={{ marginLeft: 6 }}>
+                      {s.reactions.join(" ")}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

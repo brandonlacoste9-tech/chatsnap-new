@@ -89,6 +89,15 @@ export function MePage() {
           {locale.toUpperCase()}
         </p>
 
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ width: "100%", marginTop: 16 }}
+          onClick={() => nav("/discover")}
+        >
+          ✨ {t("discover")}
+        </button>
+
         <h3 style={{ marginTop: 20 }}>{t("enableNotifs")}</h3>
         <button
           type="button"

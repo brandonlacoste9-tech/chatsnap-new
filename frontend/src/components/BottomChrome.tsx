@@ -73,6 +73,10 @@ export function BottomChrome() {
         📷
         <div>{t("camera")}</div>
       </NavLink>
+      <NavLink to="/discover" style={linkStyle}>
+        ✨
+        <div>{t("discover")}</div>
+      </NavLink>
       <NavLink to="/app/inbox" style={linkStyle}>
         <span style={{ position: "relative", display: "inline-block" }}>
           📬

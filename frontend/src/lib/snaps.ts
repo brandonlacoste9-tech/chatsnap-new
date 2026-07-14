@@ -141,9 +141,10 @@ export type SentItem = {
   durationSec: number;
   createdAt: string;
   recipients: { username: string | null; status: string }[];
+  reactions: string[];
 };
 
-/** Snaps you sent (for “opened?” feedback). */
+/** Snaps you sent (for “opened?” feedback + reactions). */
 export async function listSentSnaps(myId: string): Promise<SentItem[]> {
   if (!supabase) return [];
   const { data: snaps, error } = await supabase
@@ -160,6 +161,11 @@ export async function listSentSnaps(myId: string): Promise<SentItem[]> {
     .select("snap_id, status, recipient_id")
     .in("snap_id", ids);
 
+  const { data: reacts } = await supabase
+    .from("snap_reactions")
+    .select("snap_id, emoji")
+    .in("snap_id", ids);
+
   const recipientIds = [
     ...new Set((recs ?? []).map((r) => r.recipient_id as string)),
   ];
@@ -173,6 +179,14 @@ export async function listSentSnaps(myId: string): Promise<SentItem[]> {
     ]),
   );
 
+  const reactsBySnap = new Map<string, string[]>();
+  for (const r of reacts ?? []) {
+    const sid = r.snap_id as string;
+    const arr = reactsBySnap.get(sid) ?? [];
+    arr.push(r.emoji as string);
+    reactsBySnap.set(sid, arr);
+  }
+
   return snaps.map((s) => ({
     snapId: s.id as string,
     mediaType: s.media_type as "image" | "video",
@@ -184,6 +198,7 @@ export async function listSentSnaps(myId: string): Promise<SentItem[]> {
         username: uname.get(r.recipient_id as string) ?? null,
         status: r.status as string,
       })),
+    reactions: reactsBySnap.get(s.id as string) ?? [],
   }));
 }
 
@@ -192,9 +207,19 @@ export async function openSnap(recipientRowId: string): Promise<{
   mediaType: "image" | "video";
   durationSec: number;
   caption: string | null;
+  snapId: string | null;
   error?: string;
 } | null> {
   if (!supabase) return null;
+
+  const empty = (error: string) => ({
+    url: "",
+    mediaType: "image" as const,
+    durationSec: 5,
+    caption: null,
+    snapId: null,
+    error,
+  });
 
   const { data: rec, error } = await supabase
     .from("snap_recipients")
@@ -202,25 +227,11 @@ export async function openSnap(recipientRowId: string): Promise<{
     .eq("id", recipientRowId)
     .maybeSingle();
 
-  if (error || !rec)
-    return {
-      url: "",
-      mediaType: "image",
-      durationSec: 5,
-      caption: null,
-      error: "gone",
-    };
-  if (rec.status === "consumed") {
-    return {
-      url: "",
-      mediaType: "image",
-      durationSec: 5,
-      caption: null,
-      error: "gone",
-    };
-  }
+  if (error || !rec) return empty("gone");
+  if (rec.status === "consumed") return empty("gone");
 
   const snap = rec.snaps as unknown as {
+    id: string;
     media_path: string;
     media_type: "image" | "video";
     duration_sec: number;
@@ -228,15 +239,7 @@ export async function openSnap(recipientRowId: string): Promise<{
     caption: string | null;
   };
 
-  if (snap.expires_at < new Date().toISOString()) {
-    return {
-      url: "",
-      mediaType: "image",
-      durationSec: 5,
-      caption: null,
-      error: "expired",
-    };
-  }
+  if (snap.expires_at < new Date().toISOString()) return empty("expired");
 
   await supabase
     .from("snap_recipients")
@@ -247,21 +250,14 @@ export async function openSnap(recipientRowId: string): Promise<{
     .from("snaps")
     .createSignedUrl(snap.media_path, 60);
 
-  if (!signed?.signedUrl) {
-    return {
-      url: "",
-      mediaType: "image",
-      durationSec: 5,
-      caption: null,
-      error: "gone",
-    };
-  }
+  if (!signed?.signedUrl) return empty("gone");
 
   return {
     url: signed.signedUrl,
     mediaType: snap.media_type,
     durationSec: snap.duration_sec,
     caption: snap.caption ?? null,
+    snapId: snap.id ?? (rec.snap_id as string),
   };
 }
 

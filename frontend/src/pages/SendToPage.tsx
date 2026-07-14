@@ -5,6 +5,7 @@ import { listAcceptedFriends } from "@/lib/friends";
 import type { Profile } from "@/lib/supabase";
 import { sendSnap } from "@/lib/snaps";
 import { publishStory } from "@/lib/stories";
+import { publishSpotlight } from "@/lib/spotlight";
 import { compressImage } from "@/lib/media";
 import { listStreaksForUser } from "@/lib/streaks";
 import { useT } from "@/lib/i18n";
@@ -13,6 +14,7 @@ import type { CaptureResult } from "@/hooks/useCamera";
 
 const DURATIONS = [1, 3, 5, 7, 10];
 
+type Dest = "friends" | "story" | "spotlight";
 type SendState = CaptureResult & { toStory?: boolean };
 
 export function SendToPage() {
@@ -27,7 +29,9 @@ export function SendToPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [duration, setDuration] = useState(5);
   const [caption, setCaption] = useState("");
-  const [toStory, setToStory] = useState(Boolean(capture?.toStory));
+  const [dest, setDest] = useState<Dest>(
+    capture?.toStory ? "story" : "friends",
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -36,7 +40,7 @@ export function SendToPage() {
       nav("/app", { replace: true });
       return;
     }
-    setToStory(Boolean(capture.toStory));
+    if (capture.toStory) setDest("story");
     const id = user?.id ?? profile?.id;
     if (!id || demoMode) {
       setFriends([]);
@@ -45,7 +49,8 @@ export function SendToPage() {
     void (async () => {
       const list = await listAcceptedFriends(id);
       setFriends(list);
-      if (list.length === 1 && !capture.toStory) setSelected(new Set([list[0].id]));
+      if (list.length === 1 && !capture.toStory)
+        setSelected(new Set([list[0].id]));
       setStreaks(await listStreaksForUser(id));
     })();
   }, [capture, user?.id, profile?.id, demoMode, nav]);
@@ -85,7 +90,7 @@ export function SendToPage() {
     const senderId = user?.id;
     if (!senderId) return;
 
-    if (!toStory && selected.size === 0) {
+    if (dest === "friends" && selected.size === 0) {
       setError(t("needFriend"));
       return;
     }
@@ -99,13 +104,20 @@ export function SendToPage() {
     }
 
     let err: string | null = null;
-    if (toStory) {
+    if (dest === "story") {
       err = await publishStory({
         userId: senderId,
         blob,
         mediaType: capture.mediaType,
         caption: caption.trim() || undefined,
         durationSec: duration,
+      });
+    } else if (dest === "spotlight") {
+      err = await publishSpotlight({
+        userId: senderId,
+        blob,
+        mediaType: capture.mediaType,
+        caption: caption.trim() || undefined,
       });
     } else {
       err = await sendSnap({
@@ -125,8 +137,17 @@ export function SendToPage() {
       return;
     }
     URL.revokeObjectURL(capture.previewUrl);
-    toast(toStory ? t("storyPosted") : t("sendOk"), "ok");
-    nav(toStory ? "/friends" : "/app", { replace: true });
+    const okMsg =
+      dest === "story"
+        ? t("storyPosted")
+        : dest === "spotlight"
+          ? t("spotlightPosted")
+          : t("sendOk");
+    toast(okMsg, "ok");
+    nav(
+      dest === "spotlight" ? "/discover" : dest === "story" ? "/friends" : "/app",
+      { replace: true },
+    );
   }
 
   if (!capture) return null;
@@ -136,7 +157,13 @@ export function SendToPage() {
       <button type="button" className="btn btn-ghost" onClick={() => nav(-1)}>
         ← {t("retake")}
       </button>
-      <h2>{toStory ? t("myStory") : t("sendTo")}</h2>
+      <h2>
+        {dest === "story"
+          ? t("myStory")
+          : dest === "spotlight"
+            ? t("spotlight")
+            : t("sendTo")}
+      </h2>
 
       {capture.mediaType === "image" ? (
         <img
@@ -160,17 +187,24 @@ export function SendToPage() {
       <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
         <button
           type="button"
-          className={`chip ${!toStory ? "active" : ""}`}
-          onClick={() => setToStory(false)}
+          className={`chip ${dest === "friends" ? "active" : ""}`}
+          onClick={() => setDest("friends")}
         >
           {t("sendToFriends")}
         </button>
         <button
           type="button"
-          className={`chip ${toStory ? "active" : ""}`}
-          onClick={() => setToStory(true)}
+          className={`chip ${dest === "story" ? "active" : ""}`}
+          onClick={() => setDest("story")}
         >
           📖 {t("myStory")}
+        </button>
+        <button
+          type="button"
+          className={`chip ${dest === "spotlight" ? "active" : ""}`}
+          onClick={() => setDest("spotlight")}
+        >
+          ✨ {t("spotlight")}
         </button>
       </div>
 
@@ -200,7 +234,7 @@ export function SendToPage() {
         ))}
       </div>
 
-      {!toStory && (
+      {dest === "friends" && (
         <>
           <div
             style={{
@@ -274,9 +308,14 @@ export function SendToPage() {
         </>
       )}
 
-      {toStory && (
+      {dest === "story" && (
         <p className="muted" style={{ marginTop: 12 }}>
           {t("storyHint")}
+        </p>
+      )}
+      {dest === "spotlight" && (
+        <p className="muted" style={{ marginTop: 12 }}>
+          {t("spotlightHint")}
         </p>
       )}
 
@@ -286,14 +325,16 @@ export function SendToPage() {
         type="button"
         className="btn btn-primary"
         style={{ width: "100%", marginTop: 12 }}
-        disabled={busy || (!toStory && friends.length === 0)}
+        disabled={busy || (dest === "friends" && friends.length === 0)}
         onClick={() => void onSend()}
       >
         {busy
           ? t("loading")
-          : toStory
+          : dest === "story"
             ? t("postStory")
-            : `${t("send")} (${selected.size})`}
+            : dest === "spotlight"
+              ? t("postSpotlight")
+              : `${t("send")} (${selected.size})`}
       </button>
     </div>
   );

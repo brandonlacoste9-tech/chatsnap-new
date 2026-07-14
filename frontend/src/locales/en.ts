@@ -106,6 +106,14 @@ export const en = {
   sendToFriends: "Send to friends",
   storyHint: "Friends can view this for 24 hours.",
   stories: "Stories",
+  discover: "Discover",
+  discoverHint: "Public Spotlight from the community — lasts 7 days.",
+  emptySpotlight: "Nothing on Spotlight yet. Be first — SNAP and post ✨",
+  spotlight: "Spotlight",
+  spotlightHint: "Visible to everyone on ChatSnap for 7 days. Keep it fun.",
+  spotlightPosted: "Live on Spotlight!",
+  postSpotlight: "Post to Spotlight",
+  reacted: "Reacted",
 } as const;
 
 export type MessageKey = keyof typeof en;

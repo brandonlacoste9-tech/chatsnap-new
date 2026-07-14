@@ -108,4 +108,12 @@ export const fr: Dict = {
   sendToFriends: "Envoyer aux amis",
   storyHint: "Tes amis peuvent le voir pendant 24 h.",
   stories: "Stories",
+  discover: "Découvrir",
+  discoverHint: "Spotlight public de la communauté — 7 jours.",
+  emptySpotlight: "Rien sur Spotlight. Sois le premier — SNAP et poste ✨",
+  spotlight: "Spotlight",
+  spotlightHint: "Visible pour tout le monde sur ChatSnap pendant 7 jours.",
+  spotlightPosted: "En ligne sur Spotlight !",
+  postSpotlight: "Publier sur Spotlight",
+  reacted: "Réaction",
 };
