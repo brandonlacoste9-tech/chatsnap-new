@@ -1,22 +1,73 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { BottomChrome } from "@/components/BottomChrome";
-import { SwipeShell } from "@/components/SwipeShell";
-import { AuthPage } from "@/pages/AuthPage";
-import { UsernameGate } from "@/pages/UsernameGate";
-import { FriendsPage } from "@/pages/FriendsPage";
-import { MePage } from "@/pages/MePage";
-import { SendToPage } from "@/pages/SendToPage";
-import { ViewerPage } from "@/pages/ViewerPage";
-import { AddFriendPage } from "@/pages/AddFriendPage";
-import { EditSnapPage } from "@/pages/EditSnapPage";
 import { InboxWatcher } from "@/components/InboxWatcher";
-import { ChatsPage } from "@/pages/ChatsPage";
-import { ChatThreadPage } from "@/pages/ChatThreadPage";
-import { StoryViewerPage } from "@/pages/StoryViewerPage";
-import { DiscoverPage } from "@/pages/DiscoverPage";
 import { useT } from "@/lib/i18n";
+
+// Heavy / secondary screens — code-split
+const AuthPage = lazy(() =>
+  import("@/pages/AuthPage").then((m) => ({ default: m.AuthPage })),
+);
+const UsernameGate = lazy(() =>
+  import("@/pages/UsernameGate").then((m) => ({ default: m.UsernameGate })),
+);
+const FriendsPage = lazy(() =>
+  import("@/pages/FriendsPage").then((m) => ({ default: m.FriendsPage })),
+);
+const MePage = lazy(() =>
+  import("@/pages/MePage").then((m) => ({ default: m.MePage })),
+);
+const SendToPage = lazy(() =>
+  import("@/pages/SendToPage").then((m) => ({ default: m.SendToPage })),
+);
+const ViewerPage = lazy(() =>
+  import("@/pages/ViewerPage").then((m) => ({ default: m.ViewerPage })),
+);
+const AddFriendPage = lazy(() =>
+  import("@/pages/AddFriendPage").then((m) => ({ default: m.AddFriendPage })),
+);
+const EditSnapPage = lazy(() =>
+  import("@/pages/EditSnapPage").then((m) => ({ default: m.EditSnapPage })),
+);
+const ChatsPage = lazy(() =>
+  import("@/pages/ChatsPage").then((m) => ({ default: m.ChatsPage })),
+);
+const ChatThreadPage = lazy(() =>
+  import("@/pages/ChatThreadPage").then((m) => ({ default: m.ChatThreadPage })),
+);
+const StoryViewerPage = lazy(() =>
+  import("@/pages/StoryViewerPage").then((m) => ({
+    default: m.StoryViewerPage,
+  })),
+);
+const DiscoverPage = lazy(() =>
+  import("@/pages/DiscoverPage").then((m) => ({ default: m.DiscoverPage })),
+);
+const GroupsPage = lazy(() =>
+  import("@/pages/GroupsPage").then((m) => ({ default: m.GroupsPage })),
+);
+const GroupThreadPage = lazy(() =>
+  import("@/pages/GroupThreadPage").then((m) => ({
+    default: m.GroupThreadPage,
+  })),
+);
+const SwipeShell = lazy(() =>
+  import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
+);
+
+function PageLoader() {
+  const t = useT();
+  return (
+    <div className="page-center">
+      <p className="muted">{t("loading")}</p>
+    </div>
+  );
+}
+
+function Lazy({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
 
 function RequireUser({ children }: { children: ReactNode }) {
   const { ready, session, profile, demoMode } = useAuth();
@@ -37,12 +88,16 @@ function RequireUser({ children }: { children: ReactNode }) {
   return children;
 }
 
-/** Unauthed users hitting /add/:user go login first, then back. */
 function AddFriendGate() {
   const { username } = useParams();
   const { ready, session, profile, demoMode } = useAuth();
   if (!ready) return null;
-  if (demoMode && profile?.username) return <AddFriendPage />;
+  if (demoMode && profile?.username)
+    return (
+      <Lazy>
+        <AddFriendPage />
+      </Lazy>
+    );
   if (!session) {
     return (
       <Navigate
@@ -61,7 +116,11 @@ function AddFriendGate() {
       />
     );
   }
-  return <AddFriendPage />;
+  return (
+    <Lazy>
+      <AddFriendPage />
+    </Lazy>
+  );
 }
 
 function AppShell() {
@@ -74,10 +133,20 @@ function AppShell() {
           paddingBottom: "calc(56px + var(--safe-bottom))",
         }}
       >
-        <SwipeShell />
+        <Lazy>
+          <SwipeShell />
+        </Lazy>
       </div>
       <BottomChrome />
     </div>
+  );
+}
+
+function RU({ children }: { children: ReactNode }) {
+  return (
+    <RequireUser>
+      <Lazy>{children}</Lazy>
+    </RequireUser>
   );
 }
 
@@ -86,8 +155,22 @@ export default function App() {
     <>
       <InboxWatcher />
       <Routes>
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/username" element={<UsernameGate />} />
+        <Route
+          path="/auth"
+          element={
+            <Lazy>
+              <AuthPage />
+            </Lazy>
+          }
+        />
+        <Route
+          path="/username"
+          element={
+            <Lazy>
+              <UsernameGate />
+            </Lazy>
+          }
+        />
         <Route path="/add/:username" element={<AddFriendGate />} />
         <Route
           path="/app/*"
@@ -100,73 +183,89 @@ export default function App() {
         <Route
           path="/friends"
           element={
-            <RequireUser>
+            <RU>
               <FriendsPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/chats"
           element={
-            <RequireUser>
+            <RU>
               <ChatsPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/chat/:friendId"
           element={
-            <RequireUser>
+            <RU>
               <ChatThreadPage />
-            </RequireUser>
+            </RU>
+          }
+        />
+        <Route
+          path="/groups"
+          element={
+            <RU>
+              <GroupsPage />
+            </RU>
+          }
+        />
+        <Route
+          path="/group/:groupId"
+          element={
+            <RU>
+              <GroupThreadPage />
+            </RU>
           }
         />
         <Route
           path="/me"
           element={
-            <RequireUser>
+            <RU>
               <MePage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/discover"
           element={
-            <RequireUser>
+            <RU>
               <DiscoverPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/edit"
           element={
-            <RequireUser>
+            <RU>
               <EditSnapPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/send"
           element={
-            <RequireUser>
+            <RU>
               <SendToPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/view/:recipientId"
           element={
-            <RequireUser>
+            <RU>
               <ViewerPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route
           path="/story/:userId"
           element={
-            <RequireUser>
+            <RU>
               <StoryViewerPage />
-            </RequireUser>
+            </RU>
           }
         />
         <Route path="*" element={<Navigate to="/app" replace />} />

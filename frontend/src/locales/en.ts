@@ -114,6 +114,15 @@ export const en = {
   spotlightPosted: "Live on Spotlight!",
   postSpotlight: "Post to Spotlight",
   reacted: "Reacted",
+  groups: "Groups",
+  newGroup: "New group",
+  groupName: "Group name",
+  pickMembers: "Pick friends to add",
+  createGroup: "Create group",
+  groupCreated: "Group created!",
+  noGroups: "No groups yet. Create one with your friends.",
+  members: "members",
+  needGroupMembers: "Pick at least one friend",
 } as const;
 
 export type MessageKey = keyof typeof en;

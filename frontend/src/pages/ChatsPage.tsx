@@ -45,12 +45,22 @@ export function ChatsPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 8,
           }}
         >
           <h2 style={{ margin: 0 }}>{t("chats")}</h2>
-          <button type="button" className="chip" onClick={() => void load()}>
-            {t("refresh")}
-          </button>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              className="chip active"
+              onClick={() => nav("/groups")}
+            >
+              👥 {t("groups")}
+            </button>
+            <button type="button" className="chip" onClick={() => void load()}>
+              {t("refresh")}
+            </button>
+          </div>
         </div>
 
         {demoMode && <div className="banner">{t("setupBanner")}</div>}

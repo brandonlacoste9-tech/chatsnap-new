@@ -116,4 +116,13 @@ export const fr: Dict = {
   spotlightPosted: "En ligne sur Spotlight !",
   postSpotlight: "Publier sur Spotlight",
   reacted: "Réaction",
+  groups: "Groupes",
+  newGroup: "Nouveau groupe",
+  groupName: "Nom du groupe",
+  pickMembers: "Choisis des amis",
+  createGroup: "Créer le groupe",
+  groupCreated: "Groupe créé !",
+  noGroups: "Pas encore de groupes. Crées-en un avec tes amis.",
+  members: "membres",
+  needGroupMembers: "Choisis au moins un ami",
 };
