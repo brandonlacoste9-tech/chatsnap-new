@@ -202,4 +202,47 @@ export const fr: Dict = {
   updateAvailable: "Nouvelle version ChatSnap prête",
   updateNow: "Mettre à jour",
   installed: "App installée",
+  // Landing
+  landHeroTitle: "Des snaps pour ta gang — pas pour l’algo",
+  landHeroBody:
+    "Photos & chat bilingue EN/FR entre amis. Privé par défaut. Pas de pubs, pas de machine FOMO.",
+  landHeroMicro: "Gratuit · Marche dans le navigateur · Installable en app",
+  landGetStarted: "Commencer",
+  landFeaturesTitle: "Différent, exprès",
+  landFeat1Title: "Les amis d’abord",
+  landFeat1Body:
+    "Snaps, stories, chat et groupes pour les gens que tu connais — pas un fil public par défaut.",
+  landFeat2Title: "Bilingue EN / FR",
+  landFeat2Body:
+    "Change de langue quand tu veux. UI et légendes pour l’anglais, le français et les gangs mixtes.",
+  landFeat3Title: "Notes fantômes & souvenirs",
+  landFeat3Body:
+    "Éphémère si tu veux. Garde ce qui compte dans tes Souvenirs — c’est toi qui décides.",
+  landFeat4Title: "Carte opt-in, pas de surveillance",
+  landFeat4Body:
+    "La position est optionnelle. Gel de série quand la vie arrive. Mode restreint pour focus ou plus jeunes.",
+  landHowTitle: "Comment ça marche",
+  landStep1Title: "Crée ton pseudo",
+  landStep1Body: "Inscris-toi, choisis un @, invite ton monde avec un lien.",
+  landStep2Title: "Snap & envoie",
+  landStep2Body: "Caméra, doodles, stickers — à un ami, un groupe ou ta story.",
+  landStep3Title: "Reste dans la ruche",
+  landStep3Body: "Chat, séries sans panique, Discover si tu veux — toujours ton choix.",
+  landSafeTitle: "La sécurité, pas un add-on",
+  landSafeBody:
+    "Bloquer, signaler, mode restreint, partage privé par défaut. On bâtit une ruche, pas un casino.",
+  landBottomTitle: "Prêt pour ta gang ?",
+  landBottomBody: "Rejoins gratuitement. Moins d’une minute.",
+  landFooterTag: "Pas Snap. À nous.",
+  landLegalNav: "Légal",
+  landCopyright: "© ChatSnap. Pour les gens, pas pour les fils.",
+  privacy: "Confidentialité",
+  terms: "Conditions",
+  contact: "Contact",
+  privacyTitle: "Confidentialité",
+  privacyBody:
+    "ChatSnap est privé par défaut.\n\n• Tes snaps et chats vont aux gens que tu choisis — pas un marché public.\n• Le partage de position est opt-in et se désactive quand tu veux.\n• On ne vend pas ton attention avec des pubs ou du FOMO.\n• Tu peux bloquer ou signaler des utilisateurs dans l’app.\n\nLes comptes sont stockés de façon sécurisée (auth + base). Les médias sont en stockage privé avec contrôles d’accès.\n\nQuestions : hello@chatsnap.app\n\nCe résumé deviendra une politique complète en grandissant. Mis à jour : 2026.",
+  termsTitle: "Conditions d’utilisation",
+  termsBody:
+    "En utilisant ChatSnap, tu acceptes de :\n\n• Avoir 13 ans et plus (ou l’âge du consentement numérique là où tu vis).\n• Respecter les autres — pas de harcèlement, de haine ou de contenu illégal.\n• Ne pas spammer, scraper ou abuser du service.\n• Avoir les droits sur ce que tu envoies, ou la permission de le partager.\n\nOn peut suspendre les comptes qui cassent ces règles ou mettent les autres en danger.\n\nLe service est fourni tel quel pendant qu’on grandit. Les fonctions peuvent changer.\n\nQuestions : hello@chatsnap.app\n\nMis à jour : 2026.",
 };

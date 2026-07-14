@@ -214,3 +214,226 @@ a {
   color: var(--accent-ink);
   border-color: var(--accent);
 }
+
+/* Buttons used as links (react-router Link) */
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+/* ——— Public landing ——— */
+.landing {
+  min-height: 100%;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% -10%, #2a2200 0%, transparent 55%),
+    var(--bg);
+}
+
+.landing-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.landing-header-login {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.landing-hero {
+  text-align: center;
+  padding: 2.5rem 1.25rem 2rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.landing-kicker {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.landing-title {
+  margin: 0;
+  font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+.landing-lead {
+  margin: 1rem auto 0;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.landing-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.landing-cta {
+  min-width: 148px;
+  padding: 0.9rem 1.4rem;
+}
+
+.landing-micro {
+  margin: 1rem 0 0;
+  font-size: 13px;
+}
+
+.landing-section {
+  padding: 1.5rem 1.25rem 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.landing-h2 {
+  margin: 0 0 1.25rem;
+  text-align: center;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .landing-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.landing-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.15rem 1.2rem;
+  text-align: left;
+}
+
+.landing-card-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.landing-card-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.landing-card-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.landing-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.landing-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  text-align: left;
+}
+
+.landing-step-n {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+}
+
+.landing-privacy {
+  margin: 0.5rem 1.25rem 1.5rem;
+  padding: 1.5rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid #5c4d00;
+  background: linear-gradient(180deg, #1a1600 0%, #0f0e08 100%);
+  text-align: center;
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.landing-bottom-cta {
+  text-align: center;
+  padding: 2rem 1.25rem 2.5rem;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.landing-footer {
+  border-top: 1px solid var(--border);
+  padding: 1.75rem 1.25rem calc(1.75rem + var(--safe-bottom));
+  text-align: center;
+}
+
+.landing-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.landing-footer-nav a {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-footer-nav a:hover {
+  color: var(--accent);
+}

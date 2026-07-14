@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -9,11 +9,15 @@ import { isOnboardingDone } from "@/lib/onboarding";
 export function AuthPage() {
   const t = useT();
   const location = useLocation();
-  const deepReturn =
-    (location.state as { returnTo?: string } | null)?.returnTo || null;
+  const locState = location.state as
+    | { returnTo?: string; mode?: "login" | "signup" }
+    | null;
+  const deepReturn = locState?.returnTo || null;
   const home = deepReturn || (isOnboardingDone() ? "/app" : "/onboarding");
   const { demoMode, profile, session, signIn, signUp, setUsername } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(
+    locState?.mode === "signup" ? "signup" : "login",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +59,28 @@ export function AuthPage() {
 
   return (
     <div className="page-center">
-      <div style={{ position: "absolute", top: 16, right: 16 }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 16,
+          left: 16,
+          right: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            color: "var(--muted)",
+            fontSize: 13,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          ← ChatSnap
+        </Link>
         <LanguageToggle />
       </div>
       <div className="brand">

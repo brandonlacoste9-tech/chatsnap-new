@@ -198,6 +198,49 @@ export const en = {
   updateAvailable: "New ChatSnap version ready",
   updateNow: "Update",
   installed: "Running as installed app",
+  // Landing
+  landHeroTitle: "Snaps for your crew — not the algorithm",
+  landHeroBody:
+    "Bilingual EN/FR photo & chat for friends. Private by default. No ads, no FOMO machine.",
+  landHeroMicro: "Free to join · Works in the browser · Install as an app",
+  landGetStarted: "Get started",
+  landFeaturesTitle: "Built different on purpose",
+  landFeat1Title: "Friends first",
+  landFeat1Body:
+    "Snaps, stories, chat, and groups for people you actually know — not a public feed by default.",
+  landFeat2Title: "Bilingual EN / FR",
+  landFeat2Body:
+    "Switch language anytime. Captions and UI that work for English, French, and mixed crews.",
+  landFeat3Title: "Ghost notes & memories",
+  landFeat3Body:
+    "Ephemeral when you want it. Keep what matters in your Memories vault — you control the keep.",
+  landFeat4Title: "Consent map, not surveillance",
+  landFeat4Body:
+    "Location is opt-in. Streak freeze when life happens. Restricted mode for focus or younger users.",
+  landHowTitle: "How it works",
+  landStep1Title: "Create your username",
+  landStep1Body: "Sign up, pick a @handle, invite your people with a link.",
+  landStep2Title: "Snap & send",
+  landStep2Body: "Camera, doodles, stickers — send to a friend, a group, or your story.",
+  landStep3Title: "Stay in the hive",
+  landStep3Body: "Chat, streaks without panic, Discover when you want it — always your call.",
+  landSafeTitle: "Safety is not an afterthought",
+  landSafeBody:
+    "Block, report, restricted mode, and private-by-default sharing. We’re building a hive, not a casino.",
+  landBottomTitle: "Ready for your crew?",
+  landBottomBody: "Join free. Takes under a minute.",
+  landFooterTag: "Not Snap. Ours.",
+  landLegalNav: "Legal",
+  landCopyright: "© ChatSnap. Made for people, not feeds.",
+  privacy: "Privacy",
+  terms: "Terms",
+  contact: "Contact",
+  privacyTitle: "Privacy",
+  privacyBody:
+    "ChatSnap is built private-by-default.\n\n• Your snaps and chats go to people you choose — not a public marketplace.\n• Location sharing is opt-in and can be turned off anytime.\n• We don’t sell your attention with ads or dark FOMO patterns.\n• You can block or report users from the app.\n\nAccount data is stored securely (auth + database). Media lives in private storage with access controls.\n\nQuestions: hello@chatsnap.app\n\nThis summary will grow into a full policy as we scale. Last updated: 2026.",
+  termsTitle: "Terms",
+  termsBody:
+    "By using ChatSnap you agree to:\n\n• Be 13+ (or the digital consent age where you live).\n• Treat other people with respect — no harassment, hate, or illegal content.\n• Not spam, scrape, or abuse the service.\n• Own the rights to what you upload, or have permission to share it.\n\nWe may suspend accounts that break these rules or put others at risk.\n\nThe service is provided as-is while we grow. Features may change.\n\nQuestions: hello@chatsnap.app\n\nLast updated: 2026.",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -65,6 +65,12 @@ const StickersPage = lazy(() =>
 const OnboardingPage = lazy(() =>
   import("@/pages/OnboardingPage").then((m) => ({ default: m.OnboardingPage })),
 );
+const LandingPage = lazy(() =>
+  import("@/pages/LandingPage").then((m) => ({ default: m.LandingPage })),
+);
+const LegalPage = lazy(() =>
+  import("@/pages/LegalPage").then((m) => ({ default: m.LegalPage })),
+);
 const SwipeShell = lazy(() =>
   import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
 );
@@ -182,6 +188,14 @@ export default function App() {
       <InboxWatcher />
       <Routes>
         <Route
+          path="/"
+          element={
+            <Lazy>
+              <LandingPage />
+            </Lazy>
+          }
+        />
+        <Route
           path="/auth"
           element={
             <Lazy>
@@ -205,6 +219,22 @@ export default function App() {
                 <OnboardingPage />
               </Lazy>
             </RequireUser>
+          }
+        />
+        <Route
+          path="/privacy"
+          element={
+            <Lazy>
+              <LegalPage kind="privacy" />
+            </Lazy>
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <Lazy>
+              <LegalPage kind="terms" />
+            </Lazy>
           }
         />
         <Route path="/add/:username" element={<AddFriendGate />} />
@@ -328,7 +358,8 @@ export default function App() {
             </RU>
           }
         />
-        <Route path="*" element={<Navigate to="/app" replace />} />
+        {/* Unknown paths: signed-in users hit app gate; guests land on marketing */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );
