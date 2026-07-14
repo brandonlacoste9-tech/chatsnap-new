@@ -5,35 +5,19 @@ import { useInboxCount } from "@/hooks/useInboxCount";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { isMorePath, MoreSheet } from "@/components/MoreSheet";
 
-const linkStyle = ({ isActive }: { isActive: boolean }) =>
-  ({
-    flex: 1,
-    textAlign: "center" as const,
-    textDecoration: "none",
-    color: isActive ? "var(--accent)" : "var(--muted)",
-    fontSize: 10,
-    fontWeight: isActive ? 700 : 500,
-    padding: "6px 2px",
-    position: "relative" as const,
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    fontFamily: "inherit",
-  }) as const;
-
 function Badge({ n }: { n: number }) {
   if (n <= 0) return null;
   return (
     <span
       style={{
         position: "absolute",
-        top: -6,
+        top: -4,
         right: -10,
         minWidth: 16,
         height: 16,
         borderRadius: 999,
         background: "var(--accent)",
-        color: "#000",
+        color: "var(--accent-ink)",
         fontSize: 10,
         fontWeight: 800,
         lineHeight: "16px",
@@ -47,7 +31,6 @@ function Badge({ n }: { n: number }) {
 
 /**
  * Primary nav: Friends · Chats · Camera · Inbox · More
- * Secondary destinations live in the More sheet (Map, Discover, Me, …).
  */
 export function BottomChrome() {
   const t = useT();
@@ -59,43 +42,42 @@ export function BottomChrome() {
 
   return (
     <>
-      <nav
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: "flex",
-          alignItems: "flex-end",
-          background: "#000",
-          borderTop: "1px solid var(--border)",
-          paddingBottom: "var(--safe-bottom)",
-          zIndex: 40,
-        }}
-        aria-label={t("mainNav")}
-      >
-        <NavLink to="/friends" style={linkStyle}>
-          👥
-          <div>{t("friends")}</div>
+      <nav className="bottom-nav" aria-label={t("mainNav")}>
+        <NavLink
+          to="/friends"
+          className={({ isActive }) =>
+            `bottom-nav-link${isActive ? " active" : ""}`
+          }
+        >
+          <span className="nav-emoji" aria-hidden>
+            👥
+          </span>
+          <span>{t("friends")}</span>
         </NavLink>
 
-        <NavLink to="/chats" style={linkStyle}>
-          <span style={{ position: "relative", display: "inline-block" }}>
+        <NavLink
+          to="/chats"
+          className={({ isActive }) =>
+            `bottom-nav-link${isActive ? " active" : ""}`
+          }
+        >
+          <span className="nav-emoji" style={{ position: "relative" }} aria-hidden>
             💬
             <Badge n={chatCount} />
           </span>
-          <div>{t("chats")}</div>
+          <span>{t("chats")}</span>
         </NavLink>
 
         <NavLink
           to="/app"
           end
-          style={({ isActive }) => ({
-            ...linkStyle({ isActive }),
-            marginTop: -10,
-          })}
+          className={({ isActive }) =>
+            `bottom-nav-link${isActive ? " active" : ""}`
+          }
+          style={{ marginTop: -12 }}
         >
           <span
+            className="nav-emoji"
             style={{
               display: "inline-flex",
               width: 48,
@@ -104,34 +86,42 @@ export function BottomChrome() {
               alignItems: "center",
               justifyContent: "center",
               background: "var(--accent)",
-              color: "#000",
+              color: "var(--accent-ink)",
               fontSize: 22,
-              boxShadow: "0 0 0 3px #000, 0 0 0 5px var(--accent)",
+              boxShadow:
+                "0 0 0 3px #000, 0 0 0 5px var(--accent), 0 4px 16px rgba(var(--edge-rgb), 0.35)",
             }}
             aria-hidden
           >
             📷
           </span>
-          <div style={{ marginTop: 2 }}>{t("camera")}</div>
+          <span style={{ marginTop: 2 }}>{t("camera")}</span>
         </NavLink>
 
-        <NavLink to="/app/inbox" style={linkStyle}>
-          <span style={{ position: "relative", display: "inline-block" }}>
+        <NavLink
+          to="/app/inbox"
+          className={({ isActive }) =>
+            `bottom-nav-link${isActive ? " active" : ""}`
+          }
+        >
+          <span className="nav-emoji" style={{ position: "relative" }} aria-hidden>
             📬
             <Badge n={snapCount} />
           </span>
-          <div>{t("inbox")}</div>
+          <span>{t("inbox")}</span>
         </NavLink>
 
         <button
           type="button"
-          style={linkStyle({ isActive: moreActive || moreOpen })}
+          className={`bottom-nav-link${moreActive || moreOpen ? " active" : ""}`}
           aria-expanded={moreOpen}
           aria-haspopup="dialog"
           onClick={() => setMoreOpen(true)}
         >
-          ☰
-          <div>{t("more")}</div>
+          <span className="nav-emoji" aria-hidden>
+            ☰
+          </span>
+          <span>{t("more")}</span>
         </button>
       </nav>
 
