@@ -11,6 +11,9 @@ export type ChatMessage = {
   read_at: string | null;
   ephemeral?: boolean;
   expires_at?: string | null;
+  /** Soft context when replying to a snap (media may already be gone). */
+  reply_snippet?: string | null;
+  reply_to_snap_id?: string | null;
 };
 
 export type ChatPreview = {
@@ -119,7 +122,11 @@ export async function sendTextMessage(
   myId: string,
   friendId: string,
   body: string,
-  opts?: { ephemeral?: boolean },
+  opts?: {
+    ephemeral?: boolean;
+    replySnippet?: string;
+    replyToSnapId?: string;
+  },
 ): Promise<string | null> {
   if (!supabase) return "No backend";
   const text = body.trim();
@@ -135,6 +142,8 @@ export async function sendTextMessage(
     media_type: "text",
     ephemeral,
     expires_at,
+    reply_snippet: opts?.replySnippet?.trim().slice(0, 200) || null,
+    reply_to_snap_id: opts?.replyToSnapId || null,
   });
   return error?.message ?? null;
 }

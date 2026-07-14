@@ -243,6 +243,12 @@ export const fr: Dict = {
   close: "Fermer",
   mainNav: "Navigation principale",
   copy: "Copier",
+  dualCaptionAdd: "Ajouter légende 2e langue",
+  dualCaptionOn: "Double légende on",
+  caption2: "Légende (autre langue)",
+  caption2Placeholder: "Le même vibe dans l’autre langue…",
+  replyToSnap: "Répondre en chat",
+  replyingToSnap: "Réponse au snap",
   hives: "Ruches",
   hivesHint:
     "Codes d’invitation privés pour ton école, ta gang ou ta ville. Rejoins → ajoute des amis.",

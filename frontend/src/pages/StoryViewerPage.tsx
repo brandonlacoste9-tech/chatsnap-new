@@ -185,7 +185,7 @@ export function StoryViewerPage() {
       )}
       {!url && <p className="muted">{t("loading")}</p>}
 
-      {story?.caption && (
+      {(story?.caption || story?.caption_2) && (
         <div
           style={{
             position: "absolute",
@@ -193,12 +193,24 @@ export function StoryViewerPage() {
             left: 16,
             right: 16,
             textAlign: "center",
-            fontWeight: 800,
-            fontSize: 18,
             textShadow: "0 2px 8px #000",
           }}
         >
-          {story.caption}
+          {story.caption && (
+            <div style={{ fontWeight: 800, fontSize: 18 }}>{story.caption}</div>
+          )}
+          {story.caption_2 && (
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: 15,
+                marginTop: 4,
+                color: "var(--accent)",
+              }}
+            >
+              {story.caption_2}
+            </div>
+          )}
         </div>
       )}
     </div>

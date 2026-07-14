@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   listThread,
@@ -17,8 +17,13 @@ import { translateText } from "@/lib/translate";
 import { blockUser } from "@/lib/blocks";
 import { reportUser } from "@/lib/safety";
 
+type ReplySnapState = {
+  replyToSnap?: { snapId?: string; snippet?: string };
+};
+
 export function ChatThreadPage() {
   const { friendId } = useParams();
+  const location = useLocation();
   const t = useT();
   const nav = useNavigate();
   const { toast } = useToast();
@@ -31,6 +36,19 @@ export function ChatThreadPage() {
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [ephemeral, setEphemeral] = useState(false);
+  const [replySnap, setReplySnap] = useState<{
+    snapId?: string;
+    snippet: string;
+  } | null>(() => {
+    const st = location.state as ReplySnapState | null;
+    if (st?.replyToSnap?.snippet) {
+      return {
+        snapId: st.replyToSnap.snapId,
+        snippet: st.replyToSnap.snippet,
+      };
+    }
+    return null;
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -105,13 +123,20 @@ export function ChatThreadPage() {
   async function onSendText() {
     if (!myId || !friendId || !text.trim()) return;
     setBusy(true);
-    const err = await sendTextMessage(myId, friendId, text, { ephemeral });
+    const err = await sendTextMessage(myId, friendId, text, {
+      ephemeral,
+      replySnippet: replySnap?.snippet,
+      replyToSnapId: replySnap?.snapId,
+    });
     setBusy(false);
     if (err) {
       toast(err, "err");
       return;
     }
     setText("");
+    setReplySnap(null);
+    // clear router state so refresh doesn't re-attach reply
+    nav(location.pathname, { replace: true, state: null });
     void load();
   }
 
@@ -298,6 +323,22 @@ export function ChatThreadPage() {
                     👻 {t("ephemeral")}
                   </div>
                 )}
+                {m.reply_snippet && (
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--accent)",
+                      fontWeight: 700,
+                      marginBottom: 6,
+                      padding: "6px 8px",
+                      borderLeft: "3px solid var(--accent)",
+                      background: "rgba(255,252,0,0.08)",
+                      borderRadius: 6,
+                    }}
+                  >
+                    ↩ {t("replyingToSnap")}: {m.reply_snippet}
+                  </div>
+                )}
                 {m.media_type === "text" && (
                   <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                     {m.body}
@@ -368,6 +409,46 @@ export function ChatThreadPage() {
           })}
           <div ref={bottomRef} />
         </div>
+
+        {replySnap && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              borderTop: "1px solid var(--border)",
+              background: "#1a1600",
+            }}
+          >
+            <div style={{ flex: 1, fontSize: 13, minWidth: 0 }}>
+              <strong style={{ color: "var(--accent)" }}>
+                ↩ {t("replyingToSnap")}
+              </strong>
+              <div
+                className="muted"
+                style={{
+                  fontSize: 12,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {replySnap.snippet}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="chip"
+              onClick={() => {
+                setReplySnap(null);
+                nav(location.pathname, { replace: true, state: null });
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <div
           style={{

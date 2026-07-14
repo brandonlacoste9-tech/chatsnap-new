@@ -6,6 +6,7 @@ export type SpotlightPost = {
   media_path: string;
   media_type: "image" | "video";
   caption: string | null;
+  caption_2?: string | null;
   created_at: string;
   expires_at: string;
   like_count: number;
@@ -19,6 +20,7 @@ export async function publishSpotlight(opts: {
   blob: Blob;
   mediaType: "image" | "video";
   caption?: string;
+  caption2?: string;
 }): Promise<string | null> {
   if (!supabase) return "No backend";
   const id = crypto.randomUUID();
@@ -40,6 +42,7 @@ export async function publishSpotlight(opts: {
     media_path: path,
     media_type: opts.mediaType,
     caption: opts.caption?.trim().slice(0, 120) || null,
+    caption_2: opts.caption2?.trim().slice(0, 120) || null,
     expires_at: expires,
   });
   return error?.message ?? null;
@@ -82,6 +85,7 @@ export async function listSpotlight(myId: string): Promise<SpotlightPost[]> {
       media_path: row.media_path as string,
       media_type: row.media_type as "image" | "video",
       caption: (row.caption as string) ?? null,
+      caption_2: (row.caption_2 as string) ?? null,
       created_at: row.created_at as string,
       expires_at: row.expires_at as string,
       like_count: (row.like_count as number) ?? 0,

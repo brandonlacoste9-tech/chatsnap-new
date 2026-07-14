@@ -9,6 +9,7 @@ export type InboxItem = {
   createdAt: string;
   expiresAt: string;
   caption: string | null;
+  caption2: string | null;
   sender: Profile;
 };
 
@@ -19,6 +20,7 @@ export async function sendSnap(opts: {
   durationSec: number;
   recipientIds: string[];
   caption?: string;
+  caption2?: string;
 }): Promise<string | null> {
   if (!supabase) return "No backend";
   if (opts.recipientIds.length === 0) return "No recipients";
@@ -39,6 +41,7 @@ export async function sendSnap(opts: {
 
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const caption = opts.caption?.trim().slice(0, 120) || null;
+  const caption_2 = opts.caption2?.trim().slice(0, 120) || null;
   const { error: snapErr } = await supabase.from("snaps").insert({
     id: snapId,
     sender_id: opts.senderId,
@@ -47,6 +50,7 @@ export async function sendSnap(opts: {
     duration_sec: opts.durationSec,
     expires_at: expires,
     caption,
+    caption_2,
   });
   if (snapErr) return snapErr.message;
 
@@ -98,6 +102,7 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
       created_at: string;
       expires_at: string;
       caption: string | null;
+      caption_2: string | null;
     } | null;
     if (!snap) continue;
     if (snap.expires_at < now) continue;
@@ -110,6 +115,7 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
       createdAt: snap.created_at,
       expiresAt: snap.expires_at,
       caption: snap.caption ?? null,
+      caption2: snap.caption_2 ?? null,
       sender: {
         id: snap.sender_id,
         username: null,
@@ -207,7 +213,9 @@ export async function openSnap(recipientRowId: string): Promise<{
   mediaType: "image" | "video";
   durationSec: number;
   caption: string | null;
+  caption2: string | null;
   snapId: string | null;
+  senderId: string | null;
   error?: string;
 } | null> {
   if (!supabase) return null;
@@ -217,7 +225,9 @@ export async function openSnap(recipientRowId: string): Promise<{
     mediaType: "image" as const,
     durationSec: 5,
     caption: null,
+    caption2: null,
     snapId: null,
+    senderId: null,
     error,
   });
 
@@ -232,11 +242,13 @@ export async function openSnap(recipientRowId: string): Promise<{
 
   const snap = rec.snaps as unknown as {
     id: string;
+    sender_id: string;
     media_path: string;
     media_type: "image" | "video";
     duration_sec: number;
     expires_at: string;
     caption: string | null;
+    caption_2: string | null;
   };
 
   if (snap.expires_at < new Date().toISOString()) return empty("expired");
@@ -257,7 +269,9 @@ export async function openSnap(recipientRowId: string): Promise<{
     mediaType: snap.media_type,
     durationSec: snap.duration_sec,
     caption: snap.caption ?? null,
+    caption2: snap.caption_2 ?? null,
     snapId: snap.id ?? (rec.snap_id as string),
+    senderId: snap.sender_id ?? null,
   };
 }
 

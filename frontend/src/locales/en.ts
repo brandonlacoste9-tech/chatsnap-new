@@ -239,6 +239,12 @@ export const en = {
   close: "Close",
   mainNav: "Main navigation",
   copy: "Copy",
+  dualCaptionAdd: "Add 2nd language caption",
+  dualCaptionOn: "Dual caption on",
+  caption2: "Caption (other language)",
+  caption2Placeholder: "Same vibe in the other language…",
+  replyToSnap: "Reply in chat",
+  replyingToSnap: "Replying to snap",
   hives: "Hives",
   hivesHint:
     "Private invite codes for your school, crew, or city. Join → add members as friends.",

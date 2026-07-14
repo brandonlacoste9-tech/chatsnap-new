@@ -16,6 +16,7 @@ export async function saveMemory(opts: {
   blob: Blob;
   mediaType: "image" | "video";
   caption?: string;
+  caption2?: string;
   source?: "snap" | "story" | "spotlight" | "upload";
 }): Promise<string | null> {
   if (!supabase) return "No backend";
@@ -37,6 +38,7 @@ export async function saveMemory(opts: {
     media_path: path,
     media_type: opts.mediaType,
     caption: opts.caption?.trim().slice(0, 120) || null,
+    caption_2: opts.caption2?.trim().slice(0, 120) || null,
     source: opts.source ?? "snap",
   });
   return error?.message ?? null;

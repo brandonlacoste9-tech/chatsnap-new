@@ -6,6 +6,7 @@ export type StoryItem = {
   media_path: string;
   media_type: "image" | "video";
   caption: string | null;
+  caption_2?: string | null;
   duration_sec: number;
   created_at: string;
   expires_at: string;
@@ -23,6 +24,7 @@ export async function publishStory(opts: {
   blob: Blob;
   mediaType: "image" | "video";
   caption?: string;
+  caption2?: string;
   durationSec?: number;
 }): Promise<string | null> {
   if (!supabase) return "No backend";
@@ -45,6 +47,7 @@ export async function publishStory(opts: {
     media_path: path,
     media_type: opts.mediaType,
     caption: opts.caption?.trim().slice(0, 120) || null,
+    caption_2: opts.caption2?.trim().slice(0, 120) || null,
     duration_sec: opts.durationSec ?? 5,
     expires_at: expires,
   });

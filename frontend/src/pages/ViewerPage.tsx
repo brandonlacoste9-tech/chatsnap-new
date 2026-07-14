@@ -6,6 +6,15 @@ import { REACTION_EMOJIS, sendSnapReaction } from "@/lib/reactions";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 
+function buildReplySnippet(
+  caption: string | null,
+  caption2: string | null,
+): string {
+  const parts = [caption, caption2].filter(Boolean) as string[];
+  if (parts.length) return parts.join(" · ").slice(0, 160);
+  return "📷 Snap";
+}
+
 export function ViewerPage() {
   const t = useT();
   const { recipientId } = useParams();
@@ -15,7 +24,9 @@ export function ViewerPage() {
   const [url, setUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [caption, setCaption] = useState<string | null>(null);
+  const [caption2, setCaption2] = useState<string | null>(null);
   const [snapId, setSnapId] = useState<string | null>(null);
+  const [senderId, setSenderId] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [reacted, setReacted] = useState<string | null>(null);
@@ -36,7 +47,9 @@ export function ViewerPage() {
       setUrl(res.url);
       setMediaType(res.mediaType);
       setCaption(res.caption);
+      setCaption2(res.caption2);
       setSnapId(res.snapId);
+      setSenderId(res.senderId);
       setLeft(res.durationSec);
 
       let remaining = res.durationSec;
@@ -69,7 +82,6 @@ export function ViewerPage() {
 
   async function onReact(emoji: string) {
     if (!snapId || !user?.id) return;
-    // Pause countdown briefly so user can react
     if (timerRef.current) window.clearInterval(timerRef.current);
     const err = await sendSnapReaction(snapId, user.id, emoji);
     if (err) {
@@ -86,6 +98,24 @@ export function ViewerPage() {
         nav("/app/inbox", { replace: true });
       })();
     }, 600);
+  }
+
+  async function onReply() {
+    if (!senderId || !recipientId) return;
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (!done.current) {
+      done.current = true;
+      await consumeSnap(recipientId);
+    }
+    nav(`/chat/${senderId}`, {
+      replace: true,
+      state: {
+        replyToSnap: {
+          snapId: snapId ?? undefined,
+          snippet: buildReplySnippet(caption, caption2),
+        },
+      },
+    });
   }
 
   if (error) {
@@ -149,25 +179,39 @@ export function ViewerPage() {
       )}
       {!url && !error && <p className="muted">{t("loading")}</p>}
 
-      {caption && (
+      {(caption || caption2) && (
         <div
           style={{
             position: "absolute",
-            bottom: 100,
+            bottom: 108,
             left: 16,
             right: 16,
             textAlign: "center",
-            fontWeight: 800,
-            fontSize: 18,
             textShadow: "0 2px 8px #000",
             color: "#fff",
+            zIndex: 2,
           }}
         >
-          {caption}
+          {caption && (
+            <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 4 }}>
+              {caption}
+            </div>
+          )}
+          {caption2 && (
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: 15,
+                opacity: 0.92,
+                color: "var(--accent)",
+              }}
+            >
+              {caption2}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Quick react bar */}
       <div
         style={{
           position: "absolute",
@@ -175,32 +219,45 @@ export function ViewerPage() {
           left: 0,
           right: 0,
           display: "flex",
-          justifyContent: "center",
-          gap: 8,
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 10,
           zIndex: 3,
           pointerEvents: "auto",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {REACTION_EMOJIS.map((e) => (
+        <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+          {REACTION_EMOJIS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => void onReact(e)}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                border:
+                  reacted === e ? "2px solid var(--accent)" : "1px solid #333",
+                background: "rgba(0,0,0,0.55)",
+                fontSize: 22,
+                cursor: "pointer",
+              }}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+        {senderId && (
           <button
-            key={e}
             type="button"
-            onClick={() => void onReact(e)}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              border:
-                reacted === e ? "2px solid var(--accent)" : "1px solid #333",
-              background: "rgba(0,0,0,0.55)",
-              fontSize: 22,
-              cursor: "pointer",
-            }}
+            className="btn btn-primary"
+            style={{ padding: "0.55rem 1.2rem", fontSize: 14 }}
+            onClick={() => void onReply()}
           >
-            {e}
+            💬 {t("replyToSnap")}
           </button>
-        ))}
+        )}
       </div>
     </div>
   );

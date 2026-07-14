@@ -33,13 +33,17 @@ export function SendToPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [duration, setDuration] = useState(5);
   const [caption, setCaption] = useState("");
+  const [caption2, setCaption2] = useState("");
+  const [showDual, setShowDual] = useState(false);
   const [ideas, setIdeas] = useState<string[]>([]);
+  const [ideas2, setIdeas2] = useState<string[]>([]);
   const [dest, setDest] = useState<Dest>(
     capture?.toStory ? "story" : "friends",
   );
   const [saveVault, setSaveVault] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const otherLocale = locale === "fr" ? "en" : "fr";
 
   useEffect(() => {
     if (!capture) {
@@ -48,6 +52,7 @@ export function SendToPage() {
     }
     if (capture.toStory) setDest("story");
     setIdeas([captionForTime(locale), ...suggestCaptions(locale, 5)]);
+    setIdeas2([captionForTime(otherLocale), ...suggestCaptions(otherLocale, 5)]);
     const id = user?.id ?? profile?.id;
     if (!id || demoMode) {
       setFriends([]);
@@ -60,7 +65,7 @@ export function SendToPage() {
         setSelected(new Set([list[0].id]));
       setStreaks(await listStreaksForUser(id));
     })();
-  }, [capture, user?.id, profile?.id, demoMode, nav, locale]);
+  }, [capture, user?.id, profile?.id, demoMode, nav, locale, otherLocale]);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -110,13 +115,17 @@ export function SendToPage() {
       return;
     }
 
+    const cap1 = caption.trim() || undefined;
+    const cap2 = showDual ? caption2.trim() || undefined : undefined;
+
     let err: string | null = null;
     if (dest === "story") {
       err = await publishStory({
         userId: senderId,
         blob,
         mediaType: capture.mediaType,
-        caption: caption.trim() || undefined,
+        caption: cap1,
+        caption2: cap2,
         durationSec: duration,
       });
     } else if (dest === "spotlight") {
@@ -124,7 +133,8 @@ export function SendToPage() {
         userId: senderId,
         blob,
         mediaType: capture.mediaType,
-        caption: caption.trim() || undefined,
+        caption: cap1,
+        caption2: cap2,
       });
     } else {
       err = await sendSnap({
@@ -133,7 +143,8 @@ export function SendToPage() {
         mediaType: capture.mediaType,
         durationSec: duration,
         recipientIds: [...selected],
-        caption: caption.trim() || undefined,
+        caption: cap1,
+        caption2: cap2,
       });
     }
 
@@ -150,7 +161,8 @@ export function SendToPage() {
         userId: senderId,
         blob,
         mediaType: capture.mediaType,
-        caption: caption.trim() || undefined,
+        caption: cap1,
+        caption2: cap2,
         source:
           dest === "story"
             ? "story"
@@ -240,7 +252,7 @@ export function SendToPage() {
       </div>
 
       <label className="muted" style={{ display: "block", marginTop: 12 }}>
-        {t("caption")}
+        {t("caption")} · {locale.toUpperCase()}
       </label>
       <input
         className="field"
@@ -281,6 +293,62 @@ export function SendToPage() {
           ↻
         </button>
       </div>
+
+      <button
+        type="button"
+        className={`chip ${showDual ? "active" : ""}`}
+        style={{ marginTop: 12 }}
+        onClick={() => setShowDual((v) => !v)}
+      >
+        🌐 {showDual ? t("dualCaptionOn") : t("dualCaptionAdd")}
+      </button>
+
+      {showDual && (
+        <>
+          <label className="muted" style={{ display: "block", marginTop: 12 }}>
+            {t("caption2")} · {otherLocale.toUpperCase()}
+          </label>
+          <input
+            className="field"
+            placeholder={t("caption2Placeholder")}
+            value={caption2}
+            maxLength={80}
+            onChange={(e) => setCaption2(e.target.value)}
+          />
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+              marginTop: 8,
+            }}
+          >
+            {ideas2.map((idea) => (
+              <button
+                key={`2-${idea}`}
+                type="button"
+                className="chip"
+                style={{ fontSize: 12 }}
+                onClick={() => setCaption2(idea)}
+              >
+                {idea}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="chip"
+              onClick={() =>
+                setIdeas2([
+                  captionForTime(otherLocale),
+                  ...suggestCaptions(otherLocale, 5),
+                ])
+              }
+            >
+              ↻
+            </button>
+          </div>
+        </>
+      )}
 
       <p className="muted">{t("duration")}</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

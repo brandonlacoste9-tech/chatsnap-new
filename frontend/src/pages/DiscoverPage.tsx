@@ -142,7 +142,19 @@ export function DiscoverPage() {
 
               <div style={{ padding: "10px 12px" }}>
                 {p.caption && (
-                  <p style={{ margin: "0 0 8px", fontWeight: 600 }}>{p.caption}</p>
+                  <p style={{ margin: "0 0 4px", fontWeight: 600 }}>{p.caption}</p>
+                )}
+                {p.caption_2 && (
+                  <p
+                    style={{
+                      margin: "0 0 8px",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      color: "var(--accent)",
+                    }}
+                  >
+                    {p.caption_2}
+                  </p>
                 )}
                 <button
                   type="button"
