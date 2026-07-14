@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { consumeSnap, openSnap } from "@/lib/snaps";
@@ -28,10 +28,38 @@ export function ViewerPage() {
   const [snapId, setSnapId] = useState<string | null>(null);
   const [senderId, setSenderId] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
+  const [total, setTotal] = useState(0);
+  /** 0 = open until you close (no auto-timer) */
+  const [infinite, setInfinite] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reacted, setReacted] = useState<string | null>(null);
   const done = useRef(false);
   const timerRef = useRef<number | undefined>(undefined);
+  const remainingRef = useRef(0);
+  const pausedRef = useRef(false);
+
+  const finish = useCallback(async () => {
+    if (done.current || !recipientId) return;
+    done.current = true;
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    await consumeSnap(recipientId);
+    nav("/app/inbox", { replace: true });
+  }, [recipientId, nav]);
+
+  const startTicker = useCallback(() => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (infinite || pausedRef.current) return;
+    timerRef.current = window.setInterval(() => {
+      if (pausedRef.current) return;
+      remainingRef.current -= 1;
+      setLeft(remainingRef.current);
+      if (remainingRef.current <= 0) {
+        window.clearInterval(timerRef.current);
+        void finish();
+      }
+    }, 1000);
+  }, [finish, infinite]);
 
   useEffect(() => {
     if (!recipientId) return;
@@ -50,35 +78,40 @@ export function ViewerPage() {
       setCaption2(res.caption2);
       setSnapId(res.snapId);
       setSenderId(res.senderId);
-      setLeft(res.durationSec);
 
-      let remaining = res.durationSec;
-      timerRef.current = window.setInterval(() => {
-        remaining -= 1;
-        setLeft(remaining);
-        if (remaining <= 0) {
-          window.clearInterval(timerRef.current);
-          void finish();
-        }
-      }, 1000);
+      const dur = res.durationSec ?? 10;
+      const isInf = dur <= 0;
+      setInfinite(isInf);
+      setTotal(isInf ? 0 : dur);
+      remainingRef.current = isInf ? 0 : dur;
+      setLeft(isInf ? 0 : dur);
+
+      if (!isInf) {
+        startTicker();
+      }
     })();
-
-    async function finish() {
-      if (done.current || !recipientId) return;
-      done.current = true;
-      await consumeSnap(recipientId);
-      nav("/app/inbox", { replace: true });
-    }
 
     return () => {
       cancelled = true;
       if (timerRef.current) window.clearInterval(timerRef.current);
+      // Leaving without finishing still consumes (view-once)
       if (!done.current && recipientId) {
         void consumeSnap(recipientId);
         done.current = true;
       }
     };
-  }, [recipientId, nav, t]);
+  }, [recipientId, t, startTicker]);
+
+  function setHold(hold: boolean) {
+    pausedRef.current = hold;
+    setPaused(hold);
+    if (infinite) return;
+    if (hold) {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    } else {
+      startTicker();
+    }
+  }
 
   async function onReact(emoji: string) {
     if (!snapId || !user?.id) return;
@@ -91,12 +124,7 @@ export function ViewerPage() {
     setReacted(emoji);
     toast(`${t("reacted")} ${emoji}`, "ok");
     window.setTimeout(() => {
-      void (async () => {
-        if (done.current || !recipientId) return;
-        done.current = true;
-        await consumeSnap(recipientId);
-        nav("/app/inbox", { replace: true });
-      })();
+      void finish();
     }, 600);
   }
 
@@ -133,6 +161,9 @@ export function ViewerPage() {
     );
   }
 
+  const progress =
+    !infinite && total > 0 ? Math.max(0, Math.min(1, left / total)) : 1;
+
   return (
     <div
       style={{
@@ -143,30 +174,96 @@ export function ViewerPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        userSelect: "none",
+        touchAction: "none",
       }}
+      onPointerDown={() => setHold(true)}
+      onPointerUp={() => setHold(false)}
+      onPointerCancel={() => setHold(false)}
+      onPointerLeave={() => setHold(false)}
     >
+      {/* Progress bar */}
+      {!infinite && (
+        <div
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 12,
+            right: 12,
+            height: 3,
+            borderRadius: 2,
+            background: "rgba(255,255,255,0.2)",
+            zIndex: 3,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${progress * 100}%`,
+              background: "var(--accent)",
+              transition: paused ? "none" : "width 0.9s linear",
+            }}
+          />
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",
           top: 28,
           right: 16,
-          background: "var(--accent)",
-          color: "#000",
+          background: paused ? "#333" : "var(--accent)",
+          color: paused ? "#fff" : "#000",
           fontWeight: 800,
           borderRadius: 999,
           padding: "6px 12px",
           zIndex: 2,
+          fontSize: 14,
         }}
       >
-        {left}
-        {t("seconds")}
+        {infinite
+          ? t("snapHoldClose")
+          : paused
+            ? `⏸ ${t("snapPaused")}`
+            : `${left}${t("seconds")}`}
       </div>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          void finish();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        style={{
+          position: "absolute",
+          top: 24,
+          left: 14,
+          zIndex: 4,
+          background: "rgba(0,0,0,0.5)",
+          border: "1px solid #333",
+          color: "#fff",
+          borderRadius: 999,
+          padding: "6px 12px",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        ✕
+      </button>
 
       {url && mediaType === "image" && (
         <img
           src={url}
           alt=""
-          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+          draggable={false}
+          style={{
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            pointerEvents: "none",
+          }}
         />
       )}
       {url && mediaType === "video" && (
@@ -174,7 +271,8 @@ export function ViewerPage() {
           src={url}
           autoPlay
           playsInline
-          style={{ maxWidth: "100%", maxHeight: "100%" }}
+          loop={infinite}
+          style={{ maxWidth: "100%", maxHeight: "100%", pointerEvents: "none" }}
         />
       )}
       {!url && !error && <p className="muted">{t("loading")}</p>}
@@ -183,13 +281,14 @@ export function ViewerPage() {
         <div
           style={{
             position: "absolute",
-            bottom: 108,
+            bottom: 120,
             left: 16,
             right: 16,
             textAlign: "center",
             textShadow: "0 2px 8px #000",
             color: "#fff",
             zIndex: 2,
+            pointerEvents: "none",
           }}
         >
           {caption && (
@@ -212,6 +311,22 @@ export function ViewerPage() {
         </div>
       )}
 
+      <p
+        className="muted"
+        style={{
+          position: "absolute",
+          bottom: 100,
+          left: 0,
+          right: 0,
+          textAlign: "center",
+          fontSize: 11,
+          zIndex: 2,
+          pointerEvents: "none",
+        }}
+      >
+        {t("snapHoldHint")}
+      </p>
+
       <div
         style={{
           position: "absolute",
@@ -225,6 +340,7 @@ export function ViewerPage() {
           zIndex: 3,
           pointerEvents: "auto",
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>

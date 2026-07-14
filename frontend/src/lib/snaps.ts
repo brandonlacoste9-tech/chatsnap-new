@@ -43,12 +43,16 @@ export async function sendSnap(opts: {
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const caption = opts.caption?.trim().slice(0, 120) || null;
   const caption_2 = opts.caption2?.trim().slice(0, 120) || null;
+  // 0 = open until close; otherwise clamp 1–60
+  const rawDur = opts.durationSec ?? 10;
+  const duration_sec =
+    rawDur <= 0 ? 0 : Math.min(60, Math.max(1, Math.round(rawDur)));
   const { error: snapErr } = await supabase.from("snaps").insert({
     id: snapId,
     sender_id: opts.senderId,
     media_path: path,
     media_type: opts.mediaType,
-    duration_sec: opts.durationSec,
+    duration_sec,
     expires_at: expires,
     caption,
     caption_2,

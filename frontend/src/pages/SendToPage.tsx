@@ -15,7 +15,8 @@ import { useI18n, useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import type { CaptureResult } from "@/hooks/useCamera";
 
-const DURATIONS = [1, 3, 5, 7, 10];
+/** seconds; 0 = open until they close (no auto timer) */
+const DURATIONS = [3, 5, 10, 15, 30, 0] as const;
 
 type Dest = "friends" | "story" | "spotlight";
 type SendState = CaptureResult & { toStory?: boolean };
@@ -32,7 +33,7 @@ export function SendToPage() {
   const [friends, setFriends] = useState<Profile[]>([]);
   const [streaks, setStreaks] = useState<Map<string, number>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [duration, setDuration] = useState(5);
+  const [duration, setDuration] = useState(10);
   const [caption, setCaption] = useState("");
   const [caption2, setCaption2] = useState("");
   // Bilingual default: dual panel open for ChatSnap crews
@@ -436,7 +437,15 @@ export function SendToPage() {
         )}
       </div>
 
-      <p className="muted">{t("duration")}</p>
+      <p className="muted" style={{ marginBottom: 4 }}>
+        {t("duration")} ·{" "}
+        <strong style={{ color: "var(--accent)" }}>
+          {duration === 0 ? t("durationOpen") : `${duration}${t("seconds")}`}
+        </strong>
+      </p>
+      <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+        {t("durationHint")}
+      </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {DURATIONS.map((d) => (
           <button
@@ -445,8 +454,7 @@ export function SendToPage() {
             className={`chip ${duration === d ? "active" : ""}`}
             onClick={() => setDuration(d)}
           >
-            {d}
-            {t("seconds")}
+            {d === 0 ? t("durationOpen") : `${d}${t("seconds")}`}
           </button>
         ))}
       </div>
