@@ -36,7 +36,9 @@
 - Live capture via generate_figma_design also rate-limited on Starter
 
 ## Next (optional)
-- [ ] Empty states with illustration slots
-- [ ] Skeleton loaders for inbox/chats
-- [ ] Motion: sheet spring, page transitions
+- [x] Empty states (inbox / sent / friends / chats)
+- [x] Skeleton loaders for inbox/chats
+- [x] Camera chrome hierarchy + shutter glow
+- [x] Motion: fade-up lists, empty enter, more sheet shadow
 - [ ] Dark/light (if ever needed — currently dark-first)
+- [ ] Skeleton for friends discover list

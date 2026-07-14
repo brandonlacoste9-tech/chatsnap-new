@@ -221,16 +221,27 @@ export function SendToPage() {
 
   return (
     <div className="page" style={{ paddingBottom: 120 }}>
-      <button type="button" className="btn btn-ghost" onClick={() => nav(-1)}>
-        ← {t("retake")}
-      </button>
-      <h2>
-        {dest === "story"
-          ? t("myStory")
-          : dest === "spotlight"
-            ? t("spotlight")
-            : t("sendTo")}
-      </h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 8,
+        }}
+      >
+        <button type="button" className="chip" onClick={() => nav(-1)}>
+          ← {t("retake")}
+        </button>
+        <h2 className="page-title" style={{ margin: 0, flex: 1, textAlign: "center" }}>
+          {dest === "story"
+            ? t("myStory")
+            : dest === "spotlight"
+              ? t("spotlight")
+              : t("sendTo")}
+        </h2>
+        <span style={{ width: 72 }} aria-hidden />
+      </div>
 
       {capture.mediaType === "image" ? (
         <img
@@ -238,9 +249,11 @@ export function SendToPage() {
           alt=""
           style={{
             width: "100%",
-            maxHeight: 240,
+            maxHeight: 260,
             objectFit: "cover",
             borderRadius: 16,
+            border: "1px solid var(--border)",
+            boxShadow: "0 0 24px rgba(var(--edge-rgb), 0.12)",
           }}
         />
       ) : (

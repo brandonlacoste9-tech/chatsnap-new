@@ -13,6 +13,8 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import { SwipeToErase } from "@/components/SwipeToErase";
+import { EmptyState } from "@/components/EmptyState";
+import { SkeletonList } from "@/components/Skeleton";
 
 export function InboxPage() {
   const t = useT();
@@ -98,7 +100,7 @@ export function InboxPage() {
           marginTop: 8,
         }}
       >
-        <h2 style={{ margin: 0 }}>{t("inbox")}</h2>
+        <h2 className="page-title">{t("inbox")}</h2>
         <button type="button" className="chip" onClick={() => void load()}>
           {t("refresh")}
         </button>
@@ -127,10 +129,24 @@ export function InboxPage() {
       </div>
 
       {demoMode && <div className="banner">{t("setupBanner")}</div>}
-      {loading && <p className="muted">{t("loading")}</p>}
+      {loading && <SkeletonList rows={5} />}
 
       {tab === "inbox" && !loading && items.length === 0 && (
-        <p className="muted">{t("emptyInbox")}</p>
+        <EmptyState
+          icon="📬"
+          title={t("emptyInbox")}
+          body={t("emptyInboxBody")}
+          action={
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: "100%" }}
+              onClick={() => nav("/app")}
+            >
+              {t("emptyInboxCta")}
+            </button>
+          }
+        />
       )}
 
       {tab === "inbox" && (
@@ -186,7 +202,21 @@ export function InboxPage() {
       )}
 
       {tab === "sent" && !loading && sent.length === 0 && (
-        <p className="muted">{t("noSent")}</p>
+        <EmptyState
+          icon="📤"
+          title={t("noSent")}
+          body={t("emptySentBody")}
+          action={
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: "100%" }}
+              onClick={() => nav("/app")}
+            >
+              {t("emptyInboxCta")}
+            </button>
+          }
+        />
       )}
 
       {tab === "sent" && (

@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listChatPreviews, type ChatPreview } from "@/lib/messages";
 import { useT } from "@/lib/i18n";
 import { BottomChrome } from "@/components/BottomChrome";
+import { EmptyState } from "@/components/EmptyState";
+import { SkeletonList } from "@/components/Skeleton";
 
 export function ChatsPage() {
   const t = useT();
@@ -48,11 +50,11 @@ export function ChatsPage() {
             gap: 8,
           }}
         >
-          <h2 style={{ margin: 0 }}>{t("chats")}</h2>
+          <h2 className="page-title">{t("chats")}</h2>
           <div style={{ display: "flex", gap: 6 }}>
             <button
               type="button"
-              className="chip active"
+              className="chip"
               onClick={() => nav("/groups")}
             >
               👥 {t("groups")}
@@ -64,20 +66,33 @@ export function ChatsPage() {
         </div>
 
         {demoMode && <div className="banner">{t("setupBanner")}</div>}
-        {loading && <p className="muted">{t("loading")}</p>}
+        {loading && <SkeletonList rows={5} />}
         {!loading && rows.length === 0 && (
-          <div className="list-row" style={{ flexDirection: "column", gap: 10 }}>
-            <p className="muted" style={{ margin: 0 }}>
-              {t("noChats")}
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => nav("/friends")}
-            >
-              {t("goFriends")}
-            </button>
-          </div>
+          <EmptyState
+            icon="💬"
+            title={t("emptyChatsTitle")}
+            body={t("emptyChatsBody")}
+            action={
+              <>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ width: "100%" }}
+                  onClick={() => nav("/friends")}
+                >
+                  {t("emptyChatsCta")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ width: "100%" }}
+                  onClick={() => nav("/groups")}
+                >
+                  👥 {t("groups")}
+                </button>
+              </>
+            }
+          />
         )}
 
         <div className="stack" style={{ maxWidth: "none", marginTop: 12 }}>

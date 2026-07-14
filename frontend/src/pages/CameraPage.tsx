@@ -78,7 +78,6 @@ export function CameraPage() {
         minHeight: "100%",
         background: "#000",
         overflow: "hidden",
-        // Keep taps on camera controls, not parent swipe
         touchAction: "pan-y",
       }}
     >
@@ -96,7 +95,6 @@ export function CameraPage() {
         }}
       />
 
-      {/* Dark overlay when no stream so UI is readable */}
       {!cam.ready && (
         <div
           style={{
@@ -115,7 +113,9 @@ export function CameraPage() {
           }}
         >
           <div style={{ fontSize: 48 }}>📷</div>
-          <p style={{ margin: 0, fontWeight: 700 }}>{t("camera")}</p>
+          <p style={{ margin: 0, fontWeight: 800, letterSpacing: "-0.02em" }}>
+            {t("camera")}
+          </p>
           <p className="muted" style={{ margin: 0, maxWidth: 280 }}>
             {cam.error ? t("noCamera") : t("loading")}
           </p>
@@ -128,26 +128,29 @@ export function CameraPage() {
               {t("retry")}
             </button>
           )}
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => fileRef.current?.click()}
+          >
+            {t("gallery")}
+          </button>
         </div>
       )}
 
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          right: 12,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          zIndex: 5,
-          pointerEvents: "auto",
-        }}
-      >
+      <div className="camera-chrome-top">
         <div className="brand" style={{ fontSize: 18 }}>
           Chat<span>Snap</span>
           {storyMode ? (
-            <span style={{ fontSize: 12, marginLeft: 8, color: "var(--accent)" }}>
+            <span
+              style={{
+                fontSize: 11,
+                marginLeft: 8,
+                color: "var(--accent)",
+                fontWeight: 800,
+                letterSpacing: 0.04,
+              }}
+            >
               · {t("myStory")}
             </span>
           ) : null}
@@ -155,38 +158,24 @@ export function CameraPage() {
         <LanguageToggle />
       </div>
 
-      {/* Controls — high z-index above bottom nav */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 64,
-          left: 0,
-          right: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-          zIndex: 50,
-          paddingBottom: 8,
-          pointerEvents: "auto",
-        }}
-      >
+      <div className="camera-chrome-bottom">
         {msg && (
           <p
             style={{
               margin: 0,
-              background: "rgba(0,0,0,0.7)",
-              padding: "6px 12px",
+              background: "rgba(0,0,0,0.75)",
+              padding: "6px 14px",
               borderRadius: 999,
               fontSize: 13,
               color: "#ffb4b4",
+              border: "1px solid #442222",
             }}
           >
             {msg}
           </p>
         )}
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        <div className="camera-mode-row">
           <button
             type="button"
             className={`chip ${mode === "photo" ? "active" : ""}`}
@@ -208,14 +197,15 @@ export function CameraPage() {
             type="button"
             className="chip"
             onClick={() => fileRef.current?.click()}
+            aria-label={t("gallery")}
           >
             🖼
           </button>
         </div>
 
-        {/* Big labeled shutter */}
         <button
           type="button"
+          className={`camera-shutter${cam.recording ? " recording" : ""}`}
           disabled={busy || (mode === "video" && !cam.ready && !cam.recording)}
           onClick={(e) => {
             e.preventDefault();
@@ -224,23 +214,7 @@ export function CameraPage() {
           }}
           onPointerDown={(e) => e.stopPropagation()}
           aria-label={t("camera")}
-          style={{
-            width: 84,
-            height: 84,
-            borderRadius: "50%",
-            border: "5px solid var(--accent)",
-            background: cam.recording ? "var(--danger)" : "var(--accent)",
-            color: "#0a0a0a",
-            fontWeight: 800,
-            fontSize: 13,
-            boxShadow: "0 0 0 6px rgba(0,0,0,0.45)",
-            cursor: "pointer",
-            touchAction: "manipulation",
-            display: "grid",
-            placeItems: "center",
-            lineHeight: 1.1,
-            opacity: busy ? 0.6 : 1,
-          }}
+          style={{ opacity: busy ? 0.6 : 1 }}
         >
           {mode === "video"
             ? cam.recording
@@ -266,7 +240,6 @@ export function CameraPage() {
         </button>
       </div>
 
-      {/* Native camera / gallery — most reliable on phones */}
       <input
         ref={fileRef}
         type="file"

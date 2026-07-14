@@ -845,3 +845,219 @@ a.btn {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* ——— Empty states ——— */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  margin: var(--space-4) 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--edge-rgb), 0.06) 0%,
+    transparent 70%
+  );
+  animation: fade-up 0.35s ease both;
+}
+
+.empty-state-icon {
+  font-size: 2.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(var(--edge-rgb), 0.35));
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.empty-state-body {
+  margin: 0;
+  max-width: 280px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.empty-state-action {
+  margin-top: var(--space-2);
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ——— Skeletons ——— */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  min-height: 60px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.skeleton-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-bar {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.skeleton-bar.short {
+  height: 10px;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%,
+    #2a2a2a 40%,
+    #1a1a1a 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Soft list enter */
+.stack > * {
+  animation: fade-up 0.28s ease both;
+}
+
+/* Camera chrome */
+.camera-chrome-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: max(12px, var(--safe-top)) 14px 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.camera-chrome-top > * {
+  pointer-events: auto;
+}
+
+.camera-chrome-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px calc(72px + var(--safe-bottom));
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(0, 0, 0, 0.35) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.camera-chrome-bottom > * {
+  pointer-events: auto;
+}
+
+.camera-shutter {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 5px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow:
+    0 0 0 6px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(var(--edge-rgb), 0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  display: grid;
+  place-items: center;
+  line-height: 1.1;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.camera-shutter:active {
+  transform: scale(0.94);
+}
+
+.camera-shutter.recording {
+  background: var(--danger);
+  border-color: #fff;
+  color: #fff;
+  animation: edge-pulse 1.2s ease-in-out infinite;
+}
+
+.camera-mode-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* More sheet enter already has animation; soft panel lift */
+.more-sheet-panel {
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+}

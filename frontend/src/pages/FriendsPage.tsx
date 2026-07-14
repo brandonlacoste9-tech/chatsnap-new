@@ -17,6 +17,7 @@ import { shareInvite } from "@/lib/media";
 import { activateStreakFreeze, listStreaksForUser } from "@/lib/streaks";
 import { StoriesRail } from "@/components/StoriesRail";
 import { blockUser } from "@/lib/blocks";
+import { EmptyState } from "@/components/EmptyState";
 
 export function FriendsPage() {
   const t = useT();
@@ -336,14 +337,23 @@ export function FriendsPage() {
 
         <h3>{t("friends")}</h3>
         {accepted.length === 0 && (
-          <p className="muted">
-            {t("noFriends")}
-            <br />
-            <span style={{ fontSize: 13 }}>
-              Tip: create a 2nd account on another device, then search each
-              other.
-            </span>
-          </p>
+          <EmptyState
+            icon="👥"
+            title={t("emptyFriendsTitle")}
+            body={t("emptyFriendsBody")}
+            action={
+              myUsername ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ width: "100%" }}
+                  onClick={() => void onShareInvite()}
+                >
+                  {t("shareInvite")}
+                </button>
+              ) : undefined
+            }
+          />
         )}
         {accepted.map((e) => (
           <div key={e.friendshipId} className="list-row" style={{ marginBottom: 8 }}>
