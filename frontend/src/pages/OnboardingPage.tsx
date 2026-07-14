@@ -1,24 +1,27 @@
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 import { completeOnboarding, isOnboardingDone } from "@/lib/onboarding";
 import { inviteUrl, shareInvite } from "@/lib/media";
+import { joinHiveByCode } from "@/lib/hives";
+import { subscribeWebPush, isPushConfigured } from "@/lib/push";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/components/Toast";
 
-type Step = 0 | 1 | 2;
+type Step = 0 | 1 | 2 | 3;
 
 /**
- * 3-screen first-run tour — under 2 minutes.
- * 0 vibe · 1 add friend · 2 first snap
+ * First-run tour: vibe · add friend · map tip · first snap
  */
 export function OnboardingPage() {
   const t = useT();
   const nav = useNavigate();
   const { toast } = useToast();
-  const { profile, ready } = useAuth();
+  const { profile, ready, user } = useAuth();
   const [step, setStep] = useState<Step>(0);
+  const [hiveJoined, setHiveJoined] = useState(false);
   const username = profile?.username ?? "";
 
   const invite = useMemo(
@@ -57,7 +60,32 @@ export function OnboardingPage() {
     toast(ok ? t("inviteCopied") : invite, ok ? "ok" : "info");
   }
 
-  const dots = [0, 1, 2] as const;
+  useEffect(() => {
+    // Auto-join hive code from landing if present
+    if (!user?.id || hiveJoined) return;
+    let code = "";
+    try {
+      code = sessionStorage.getItem("chatsnap_pending_hive") ?? "";
+    } catch {
+      /* ignore */
+    }
+    if (!code) return;
+    void joinHiveByCode(user.id, code).then(({ hive, error }) => {
+      if (hive) {
+        toast(t("hiveJoined"), "ok");
+        setHiveJoined(true);
+        try {
+          sessionStorage.removeItem("chatsnap_pending_hive");
+        } catch {
+          /* ignore */
+        }
+      } else if (error) {
+        toast(error, "err");
+      }
+    });
+  }, [user?.id, hiveJoined, toast, t]);
+
+  const dots = [0, 1, 2, 3] as const;
 
   return (
     <div
@@ -222,6 +250,52 @@ export function OnboardingPage() {
         )}
 
         {step === 2 && (
+          <div className="stack" style={{ textAlign: "center", maxWidth: 340 }}>
+            <div style={{ fontSize: 56, lineHeight: 1 }}>🗺️</div>
+            <h1 style={{ margin: 0, fontSize: 26 }}>{t("onbMapTitle")}</h1>
+            <p className="muted" style={{ margin: 0, fontSize: 15 }}>
+              {t("onbMapBody")}
+            </p>
+            <ul
+              style={{
+                textAlign: "left",
+                margin: "8px 0 0",
+                paddingLeft: 18,
+                color: "var(--muted)",
+                fontSize: 14,
+                lineHeight: 1.6,
+              }}
+            >
+              <li>{t("onbMapPoint1")}</li>
+              <li>{t("onbMapPoint2")}</li>
+              <li>{t("onbMapPoint3")}</li>
+            </ul>
+            {isPushConfigured() && user?.id && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ width: "100%", marginTop: 8 }}
+                onClick={() => {
+                  void subscribeWebPush(user.id).then((err) => {
+                    toast(err ? err : t("pushOk"), err ? "err" : "ok");
+                  });
+                }}
+              >
+                🔔 {t("pushEnable")}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: "100%" }}
+              onClick={() => setStep(3)}
+            >
+              {t("continue")}
+            </button>
+          </div>
+        )}
+
+        {step === 3 && (
           <div className="stack" style={{ textAlign: "center", maxWidth: 340 }}>
             <div style={{ fontSize: 56, lineHeight: 1 }}>✨</div>
             <h1 style={{ margin: 0, fontSize: 26 }}>{t("onbSnapTitle")}</h1>

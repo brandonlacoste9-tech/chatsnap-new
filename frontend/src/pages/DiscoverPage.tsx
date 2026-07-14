@@ -79,17 +79,20 @@ export function DiscoverPage() {
         )}
         {loading && !restricted && <p className="muted">{t("loading")}</p>}
         {!restricted && !loading && posts.length === 0 && (
-          <div className="list-row" style={{ flexDirection: "column", gap: 10 }}>
-            <p className="muted" style={{ margin: 0 }}>
-              {t("emptySpotlight")}
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => nav("/app")}
-            >
-              {t("camera")} → {t("spotlight")}
-            </button>
+          <div className="empty-state">
+            <div className="empty-state-icon">✨</div>
+            <h3 className="empty-state-title">{t("emptySpotlight")}</h3>
+            <p className="empty-state-body muted">{t("discoverHint")}</p>
+            <div className="empty-state-action">
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ width: "100%" }}
+                onClick={() => nav("/app")}
+              >
+                {t("camera")} → {t("spotlight")}
+              </button>
+            </div>
           </div>
         )}
 

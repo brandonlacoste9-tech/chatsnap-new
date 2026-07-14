@@ -77,6 +77,9 @@ export async function sendFriendRequest(
 ): Promise<string | null> {
   if (!supabase) return "No backend";
   if (myId === theirId) return "That's you";
+  const { checkRateLimit } = await import("@/lib/rateLimit");
+  const limited = await checkRateLimit("friend_request", 30, 3600);
+  if (limited) return limited;
 
   // Already friends / pending either direction?
   const { data: existing } = await supabase

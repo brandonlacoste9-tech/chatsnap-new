@@ -1,8 +1,10 @@
-import { Link, Navigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { isOnboardingDone } from "@/lib/onboarding";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { normalizeHiveCode } from "@/lib/hives";
 
 const FEATURES = [
   { icon: "🔒", titleKey: "landFeat1Title", bodyKey: "landFeat1Body" },
@@ -23,7 +25,9 @@ const STEPS = [
  */
 export function LandingPage() {
   const t = useT();
+  const nav = useNavigate();
   const { ready, session, profile, demoMode } = useAuth();
+  const [hiveCode, setHiveCode] = useState("");
 
   if (!ready) {
     return (
@@ -77,6 +81,51 @@ export function LandingPage() {
             </Link>
           </div>
           <p className="muted landing-micro">{t("landHeroMicro")}</p>
+
+          <div
+            className="list-row"
+            style={{
+              marginTop: 28,
+              flexDirection: "column",
+              alignItems: "stretch",
+              gap: 10,
+              maxWidth: 360,
+              marginLeft: "auto",
+              marginRight: "auto",
+              textAlign: "left",
+              borderColor: "var(--accent)",
+            }}
+          >
+            <strong style={{ fontSize: 14 }}>🐝 {t("landHiveTitle")}</strong>
+            <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+              {t("landHiveBody")}
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="field"
+                placeholder={t("hiveCodePh")}
+                value={hiveCode}
+                maxLength={12}
+                autoCapitalize="characters"
+                onChange={(e) => setHiveCode(normalizeHiveCode(e.target.value))}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={hiveCode.length < 4}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("chatsnap_pending_hive", hiveCode);
+                  } catch {
+                    /* ignore */
+                  }
+                  nav("/auth", { state: { mode: "signup", hiveCode } });
+                }}
+              >
+                {t("hiveJoin")}
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* Features */}

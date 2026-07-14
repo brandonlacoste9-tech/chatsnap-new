@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCamera, type CaptureResult } from "@/hooks/useCamera";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { hapticSnap } from "@/lib/haptics";
 
 export function CameraPage() {
   const t = useT();
@@ -36,7 +37,10 @@ export function CameraPage() {
           return;
         }
         const cap = await cam.takePhoto();
-        if (cap) goSend(cap);
+        if (cap) {
+          hapticSnap();
+          goSend(cap);
+        }
         else {
           setMsg(t("captureError"));
           fileRef.current?.click();

@@ -14,6 +14,7 @@ import {
 } from "@/lib/push";
 import { setRestrictedMode } from "@/lib/safety";
 import { resetOnboarding } from "@/lib/onboarding";
+import { setHideReadReceipts } from "@/lib/messages";
 
 export function MePage() {
   const t = useT();
@@ -26,6 +27,9 @@ export function MePage() {
   const [vibe, setVibe] = useState(profile?.vibe_status ?? "");
   const [restricted, setRestricted] = useState(
     Boolean(profile?.restricted_mode),
+  );
+  const [hideReads, setHideReads] = useState(
+    Boolean(profile?.hide_read_receipts),
   );
   const [notifState, setNotifState] = useState(() =>
     typeof Notification !== "undefined" ? Notification.permission : "default",
@@ -242,6 +246,35 @@ export function MePage() {
           }}
         >
           {restricted ? t("restrictedOn") : t("restrictedOff")}
+        </button>
+
+        <h3 style={{ marginTop: 20 }}>{t("readReceipts")}</h3>
+        <p className="muted" style={{ fontSize: 12 }}>
+          {t("readReceiptsHint")}
+        </p>
+        <button
+          type="button"
+          className={`chip ${hideReads ? "active" : ""}`}
+          disabled={busy || demoMode}
+          onClick={() => {
+            if (!user?.id) return;
+            const next = !hideReads;
+            setBusy(true);
+            void setHideReadReceipts(user.id, next).then((err) => {
+              setBusy(false);
+              if (err) toast(err, "err");
+              else {
+                setHideReads(next);
+                void refreshProfile();
+                toast(
+                  next ? t("readReceiptsHidden") : t("readReceiptsShown"),
+                  "ok",
+                );
+              }
+            });
+          }}
+        >
+          {hideReads ? t("readReceiptsHidden") : t("readReceiptsShown")}
         </button>
 
         <p className="muted" style={{ fontSize: 12, marginTop: 12 }}>

@@ -22,6 +22,7 @@ export type Profile = {
   show_on_map?: boolean;
   restricted_mode?: boolean;
   is_admin?: boolean;
+  hide_read_receipts?: boolean;
   created_at?: string;
 };
 

@@ -26,32 +26,58 @@ export function InstallPrompt() {
       /* ignore */
     }
 
-    // Already installed?
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      // iOS
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     if (standalone) return;
+
+    const reveal = () => {
+      try {
+        // Prefer after first successful snap so it feels earned
+        if (localStorage.getItem("chatsnap_sent_once") !== "1") return;
+      } catch {
+        /* show anyway */
+      }
+      setVisible(true);
+    };
 
     const onBip = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
-      setVisible(true);
+      reveal();
     };
     window.addEventListener("beforeinstallprompt", onBip);
+    window.addEventListener("chatsnap-sent-snap", reveal);
 
-    // iOS Safari tip (no beforeinstallprompt)
     const ua = navigator.userAgent;
-    const isIos = /iPad|iPhone|iPod/.test(ua) ||
+    const isIos =
+      /iPad|iPhone|iPod/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
     if (isIos && isSafari) {
       setShowIos(true);
-      setVisible(true);
+      // iOS: show after first snap too
+      try {
+        if (localStorage.getItem("chatsnap_sent_once") === "1") setVisible(true);
+      } catch {
+        setVisible(true);
+      }
     }
 
-    return () => window.removeEventListener("beforeinstallprompt", onBip);
-  }, []);
+    // If already sent once, show bip when available
+    try {
+      if (localStorage.getItem("chatsnap_sent_once") === "1" && deferred) {
+        setVisible(true);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBip);
+      window.removeEventListener("chatsnap-sent-snap", reveal);
+    };
+  }, [deferred]);
 
   function dismiss() {
     setVisible(false);

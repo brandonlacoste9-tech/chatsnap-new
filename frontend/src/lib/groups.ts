@@ -177,3 +177,65 @@ export async function listGroupMembers(
     .in("id", ids);
   return (profiles as Profile[]) ?? [];
 }
+
+export async function getGroupMeta(
+  groupId: string,
+): Promise<{ name: string; created_by: string } | null> {
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("chat_groups")
+    .select("name, created_by")
+    .eq("id", groupId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    name: data.name as string,
+    created_by: data.created_by as string,
+  };
+}
+
+export async function renameGroup(
+  groupId: string,
+  myId: string,
+  name: string,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  const clean = name.trim().slice(0, 40);
+  if (clean.length < 1) return "Name required";
+  const { error } = await supabase
+    .from("chat_groups")
+    .update({ name: clean })
+    .eq("id", groupId)
+    .eq("created_by", myId);
+  return error?.message ?? null;
+}
+
+export async function leaveGroup(
+  groupId: string,
+  userId: string,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  const { error } = await supabase
+    .from("chat_group_members")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", userId);
+  return error?.message ?? null;
+}
+
+export async function kickFromGroup(
+  groupId: string,
+  adminId: string,
+  targetId: string,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  if (adminId === targetId) return "Can't kick yourself — leave instead";
+  const meta = await getGroupMeta(groupId);
+  if (!meta || meta.created_by !== adminId) return "Only the creator can kick";
+  const { error } = await supabase
+    .from("chat_group_members")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", targetId);
+  return error?.message ?? null;
+}

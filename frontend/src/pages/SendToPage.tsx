@@ -36,7 +36,7 @@ export function SendToPage() {
   const [duration, setDuration] = useState(10);
   const [caption, setCaption] = useState("");
   const [caption2, setCaption2] = useState("");
-  // Bilingual default: dual panel open for ChatSnap crews
+  // Bilingual default — especially when UI is French
   const [showDual, setShowDual] = useState(true);
   const [ideas, setIdeas] = useState<string[]>([]);
   const [ideas2, setIdeas2] = useState<string[]>([]);
@@ -77,6 +77,7 @@ export function SendToPage() {
       return;
     }
     if (capture.toStory) setDest("story");
+    if (locale === "fr") setShowDual(true);
     setIdeas([captionForTime(locale), ...suggestCaptions(locale, 5)]);
     setIdeas2([captionForTime(otherLocale), ...suggestCaptions(otherLocale, 5)]);
     const id = user?.id ?? profile?.id;

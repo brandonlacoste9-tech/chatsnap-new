@@ -1,6 +1,7 @@
 import { supabase, type Profile } from "@/lib/supabase";
 import { bumpStreakOnSend } from "@/lib/streaks";
 import { notifyUsersPush } from "@/lib/push";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export type InboxItem = {
   recipientId: string;
@@ -25,6 +26,9 @@ export async function sendSnap(opts: {
 }): Promise<string | null> {
   if (!supabase) return "No backend";
   if (opts.recipientIds.length === 0) return "No recipients";
+
+  const limited = await checkRateLimit("snap_send", 40, 3600);
+  if (limited) return limited;
 
   const snapId = crypto.randomUUID();
   const ext = opts.mediaType === "image" ? "jpg" : "webm";
@@ -75,6 +79,12 @@ export async function sendSnap(opts: {
     body: "New snap 👻",
     url: "/app/inbox",
   });
+  try {
+    localStorage.setItem("chatsnap_sent_once", "1");
+    window.dispatchEvent(new Event("chatsnap-sent-snap"));
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 

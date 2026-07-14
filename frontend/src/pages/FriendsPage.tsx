@@ -18,6 +18,7 @@ import { activateStreakFreeze, listStreaksForUser } from "@/lib/streaks";
 import { StoriesRail } from "@/components/StoriesRail";
 import { blockUser } from "@/lib/blocks";
 import { EmptyState } from "@/components/EmptyState";
+import { listSoftSuggestions } from "@/lib/suggestions";
 
 export function FriendsPage() {
   const t = useT();
@@ -27,6 +28,7 @@ export function FriendsPage() {
   const [q, setQ] = useState("");
   const [found, setFound] = useState<Profile | null>(null);
   const [people, setPeople] = useState<Profile[]>([]);
+  const [suggested, setSuggested] = useState<Profile[]>([]);
   const [edges, setEdges] = useState<FriendEdge[]>([]);
   const [streaks, setStreaks] = useState<Map<string, number>>(new Map());
   const [msg, setMsg] = useState<string | null>(null);
@@ -40,16 +42,19 @@ export function FriendsPage() {
     if (!myId || demoMode) {
       setEdges([]);
       setPeople([]);
+      setSuggested([]);
       setStreaks(new Map());
       return;
     }
-    const [fEdges, disc, st] = await Promise.all([
+    const [fEdges, disc, st, sug] = await Promise.all([
       listFriendships(myId),
       listDiscoverableUsers(myId),
       listStreaksForUser(myId),
+      listSoftSuggestions(myId),
     ]);
     setEdges(fEdges);
     setStreaks(st);
+    setSuggested(sug);
     if (disc.error) setMsg(disc.error);
     // Hide people already friends / pending
     const taken = new Set(fEdges.map((e) => e.profile.id));
@@ -265,6 +270,35 @@ export function FriendsPage() {
           </p>
         )}
 
+        {suggested.length > 0 && (
+          <>
+            <h3>{t("suggestions")}</h3>
+            <p className="muted" style={{ marginTop: -8, fontSize: 13 }}>
+              {t("suggestionsHint")}
+            </p>
+            {suggested.map((p) => (
+              <div key={p.id} className="list-row" style={{ marginBottom: 8 }}>
+                <div className="avatar">
+                  {(p.username?.[0] ?? "?").toUpperCase()}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <strong>@{p.username}</strong>
+                  <div className="muted">{p.display_name}</div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ padding: "0.5rem 0.9rem" }}
+                  disabled={busy}
+                  onClick={() => void onRequest(p.id)}
+                >
+                  {t("addFriend")}
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+
         {/* One-tap discover */}
         {people.length > 0 && (
           <>
@@ -336,6 +370,11 @@ export function FriendsPage() {
         )}
 
         <h3>{t("friends")}</h3>
+        {accepted.length > 0 && (
+          <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>
+            ❄️ {t("freezeHint")}
+          </p>
+        )}
         {accepted.length === 0 && (
           <EmptyState
             icon="👥"

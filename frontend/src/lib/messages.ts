@@ -179,12 +179,47 @@ export async function sendAudioMessage(
   return error?.message ?? null;
 }
 
+export async function setHideReadReceipts(
+  userId: string,
+  hide: boolean,
+): Promise<string | null> {
+  if (!supabase) return "No backend";
+  const { error } = await supabase
+    .from("profiles")
+    .update({ hide_read_receipts: hide })
+    .eq("id", userId);
+  return error?.message ?? null;
+}
+
+/** True if this user wants their opens hidden from peers. */
+export async function peerHidesReadReceipts(
+  userId: string,
+): Promise<boolean> {
+  if (!supabase) return false;
+  const { data } = await supabase
+    .from("profiles")
+    .select("hide_read_receipts")
+    .eq("id", userId)
+    .maybeSingle();
+  return Boolean(data?.hide_read_receipts);
+}
+
 export async function markThreadRead(
   myId: string,
   friendId: string,
 ): Promise<void> {
   if (!supabase) return;
-  // Mark read
+  // If we hide receipts, skip writing read_at so senders don't see "seen".
+  // Unread badge: still mark via soft local flag so the list feels clean.
+  const hide = await peerHidesReadReceipts(myId);
+  if (hide) {
+    try {
+      localStorage.setItem(`chatsnap_thread_seen_${friendId}`, Date.now().toString());
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
   const { data: unread } = await supabase
     .from("messages")
     .select("id, ephemeral")

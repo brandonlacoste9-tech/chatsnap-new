@@ -2,11 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  getGroupMeta,
+  kickFromGroup,
+  leaveGroup,
+  listGroupMembers,
   listGroupMessages,
+  renameGroup,
   sendGroupAudio,
   sendGroupText,
   type GroupMessage,
 } from "@/lib/groups";
+import type { Profile } from "@/lib/supabase";
 import { signedMediaUrl } from "@/lib/messages";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
@@ -20,6 +26,10 @@ export function GroupThreadPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [name, setName] = useState("…");
+  const [createdBy, setCreatedBy] = useState<string | null>(null);
+  const [members, setMembers] = useState<Profile[]>([]);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [renameVal, setRenameVal] = useState("");
   const [msgs, setMsgs] = useState<GroupMessage[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,6 +40,7 @@ export function GroupThreadPage() {
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const myId = user?.id;
+  const isOwner = Boolean(myId && createdBy === myId);
 
   const load = useCallback(async () => {
     if (!groupId) return;
@@ -46,15 +57,15 @@ export function GroupThreadPage() {
   }, [groupId]);
 
   useEffect(() => {
-    if (!groupId || !supabase) return;
-    void supabase
-      .from("chat_groups")
-      .select("name")
-      .eq("id", groupId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.name) setName(data.name as string);
-      });
+    if (!groupId) return;
+    void getGroupMeta(groupId).then((meta) => {
+      if (meta) {
+        setName(meta.name);
+        setCreatedBy(meta.created_by);
+        setRenameVal(meta.name);
+      }
+    });
+    void listGroupMembers(groupId).then(setMembers);
   }, [groupId]);
 
   useEffect(() => {
@@ -164,7 +175,121 @@ export function GroupThreadPage() {
             👥
           </div>
           <strong style={{ flex: 1 }}>{name}</strong>
+          <button
+            type="button"
+            className="chip"
+            onClick={() => setShowAdmin((s) => !s)}
+            title={t("groupSettings")}
+          >
+            ⚙️
+          </button>
         </header>
+
+        {showAdmin && (
+          <div
+            className="list-row"
+            style={{
+              flexDirection: "column",
+              alignItems: "stretch",
+              gap: 10,
+              margin: 12,
+              borderColor: "var(--accent)",
+            }}
+          >
+            <strong>{t("groupSettings")}</strong>
+            {isOwner && (
+              <>
+                <input
+                  className="field"
+                  value={renameVal}
+                  maxLength={40}
+                  onChange={(e) => setRenameVal(e.target.value)}
+                  placeholder={t("groupName")}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={busy}
+                  onClick={() => {
+                    if (!myId || !groupId) return;
+                    setBusy(true);
+                    void renameGroup(groupId, myId, renameVal).then((err) => {
+                      setBusy(false);
+                      if (err) toast(err, "err");
+                      else {
+                        setName(renameVal.trim());
+                        toast(t("groupRenamed"), "ok");
+                      }
+                    });
+                  }}
+                >
+                  {t("groupRename")}
+                </button>
+                <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+                  {t("groupMembers")}
+                </p>
+                {members.map((m) => (
+                  <div
+                    key={m.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>@{m.username}</span>
+                    {m.id !== myId && (
+                      <button
+                        type="button"
+                        className="chip"
+                        disabled={busy}
+                        onClick={() => {
+                          if (!myId || !groupId) return;
+                          if (!confirm(t("groupKickConfirm"))) return;
+                          setBusy(true);
+                          void kickFromGroup(groupId, myId, m.id).then(
+                            (err) => {
+                              setBusy(false);
+                              if (err) toast(err, "err");
+                              else {
+                                toast(t("groupKicked"), "ok");
+                                void listGroupMembers(groupId).then(
+                                  setMembers,
+                                );
+                              }
+                            },
+                          );
+                        }}
+                      >
+                        {t("groupKick")}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={busy}
+              onClick={() => {
+                if (!myId || !groupId) return;
+                if (!confirm(t("groupLeaveConfirm"))) return;
+                setBusy(true);
+                void leaveGroup(groupId, myId).then((err) => {
+                  setBusy(false);
+                  if (err) toast(err, "err");
+                  else {
+                    toast(t("groupLeft"), "ok");
+                    nav("/groups", { replace: true });
+                  }
+                });
+              }}
+            >
+              {t("groupLeave")}
+            </button>
+          </div>
+        )}
 
         <div
           style={{

@@ -167,6 +167,9 @@ export function MapPage() {
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
             {t("mapHint")}
           </p>
+          <p className="muted" style={{ margin: "6px 0 0", fontSize: 12 }}>
+            👻 {t("mapGhostTip")}
+          </p>
 
           <p className="muted" style={{ margin: "10px 0 4px", fontSize: 12 }}>
             {t("mapShareHowLong")}
