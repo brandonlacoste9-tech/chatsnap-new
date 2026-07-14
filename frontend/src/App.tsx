@@ -74,6 +74,9 @@ const LegalPage = lazy(() =>
 const HivesPage = lazy(() =>
   import("@/pages/HivesPage").then((m) => ({ default: m.HivesPage })),
 );
+const AdminPage = lazy(() =>
+  import("@/pages/AdminPage").then((m) => ({ default: m.AdminPage })),
+);
 const SwipeShell = lazy(() =>
   import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
 );
@@ -302,6 +305,14 @@ export default function App() {
           element={
             <RU>
               <HivesPage />
+            </RU>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RU>
+              <AdminPage />
             </RU>
           }
         />

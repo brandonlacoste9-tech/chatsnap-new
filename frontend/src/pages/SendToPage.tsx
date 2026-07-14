@@ -10,6 +10,7 @@ import { compressImage } from "@/lib/media";
 import { listStreaksForUser } from "@/lib/streaks";
 import { saveMemory } from "@/lib/memories";
 import { captionForTime, suggestCaptions } from "@/lib/captions";
+import { translateText } from "@/lib/translate";
 import { useI18n, useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import type { CaptureResult } from "@/hooks/useCamera";
@@ -34,7 +35,8 @@ export function SendToPage() {
   const [duration, setDuration] = useState(5);
   const [caption, setCaption] = useState("");
   const [caption2, setCaption2] = useState("");
-  const [showDual, setShowDual] = useState(false);
+  // Bilingual default: dual panel open for ChatSnap crews
+  const [showDual, setShowDual] = useState(true);
   const [ideas, setIdeas] = useState<string[]>([]);
   const [ideas2, setIdeas2] = useState<string[]>([]);
   const [dest, setDest] = useState<Dest>(
@@ -43,7 +45,30 @@ export function SendToPage() {
   const [saveVault, setSaveVault] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const otherLocale = locale === "fr" ? "en" : "fr";
+
+  function swapCaptions() {
+    setCaption(caption2);
+    setCaption2(caption);
+  }
+
+  async function autoTranslateToOther() {
+    if (!caption.trim()) {
+      toast(t("captionEmpty"), "info");
+      return;
+    }
+    setTranslating(true);
+    const res = await translateText(caption.trim(), otherLocale);
+    setTranslating(false);
+    if (!res) {
+      toast(t("translateFail"), "err");
+      return;
+    }
+    setCaption2(res.text.slice(0, 80));
+    setShowDual(true);
+    toast(t("dualTranslated"), "ok");
+  }
 
   useEffect(() => {
     if (!capture) {
@@ -251,104 +276,165 @@ export function SendToPage() {
         )}
       </div>
 
-      <label className="muted" style={{ display: "block", marginTop: 12 }}>
-        {t("caption")} · {locale.toUpperCase()}
-      </label>
-      <input
-        className="field"
-        placeholder={t("captionPlaceholder")}
-        value={caption}
-        maxLength={80}
-        onChange={(e) => setCaption(e.target.value)}
-      />
       <div
+        className="list-row"
         style={{
-          display: "flex",
-          gap: 6,
-          flexWrap: "wrap",
-          marginTop: 8,
+          flexDirection: "column",
+          alignItems: "stretch",
+          gap: 10,
+          marginTop: 12,
+          borderColor: showDual ? "var(--accent)" : undefined,
         }}
       >
-        <span className="muted" style={{ fontSize: 12, width: "100%" }}>
-          ✨ {t("smartCaptions")}
-        </span>
-        {ideas.map((idea) => (
-          <button
-            key={idea}
-            type="button"
-            className="chip"
-            style={{ fontSize: 12 }}
-            onClick={() => setCaption(idea)}
-          >
-            {idea}
-          </button>
-        ))}
-        <button
-          type="button"
-          className="chip"
-          onClick={() =>
-            setIdeas([captionForTime(locale), ...suggestCaptions(locale, 5)])
-          }
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
         >
-          ↻
-        </button>
-      </div>
-
-      <button
-        type="button"
-        className={`chip ${showDual ? "active" : ""}`}
-        style={{ marginTop: 12 }}
-        onClick={() => setShowDual((v) => !v)}
-      >
-        🌐 {showDual ? t("dualCaptionOn") : t("dualCaptionAdd")}
-      </button>
-
-      {showDual && (
-        <>
-          <label className="muted" style={{ display: "block", marginTop: 12 }}>
-            {t("caption2")} · {otherLocale.toUpperCase()}
-          </label>
-          <input
-            className="field"
-            placeholder={t("caption2Placeholder")}
-            value={caption2}
-            maxLength={80}
-            onChange={(e) => setCaption2(e.target.value)}
-          />
-          <div
-            style={{
-              display: "flex",
-              gap: 6,
-              flexWrap: "wrap",
-              marginTop: 8,
-            }}
-          >
-            {ideas2.map((idea) => (
-              <button
-                key={`2-${idea}`}
-                type="button"
-                className="chip"
-                style={{ fontSize: 12 }}
-                onClick={() => setCaption2(idea)}
-              >
-                {idea}
-              </button>
-            ))}
+          <strong style={{ fontSize: 14 }}>🌐 {t("dualCaptionTitle")}</strong>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className={`chip ${showDual ? "active" : ""}`}
+              onClick={() => setShowDual((v) => !v)}
+            >
+              {showDual ? t("dualCaptionOn") : t("dualCaptionAdd")}
+            </button>
             <button
               type="button"
               className="chip"
-              onClick={() =>
-                setIdeas2([
-                  captionForTime(otherLocale),
-                  ...suggestCaptions(otherLocale, 5),
-                ])
-              }
+              disabled={!caption.trim() && !caption2.trim()}
+              onClick={swapCaptions}
+              title={t("dualSwap")}
             >
-              ↻
+              ⇄
+            </button>
+            <button
+              type="button"
+              className="chip"
+              disabled={busy || translating || !caption.trim()}
+              onClick={() => void autoTranslateToOther()}
+            >
+              {translating ? "…" : `EN⇄FR`}
             </button>
           </div>
-        </>
-      )}
+        </div>
+
+        <label className="muted" style={{ display: "block", fontSize: 12 }}>
+          {t("caption")} · {locale.toUpperCase()}
+        </label>
+        <input
+          className="field"
+          placeholder={t("captionPlaceholder")}
+          value={caption}
+          maxLength={80}
+          onChange={(e) => setCaption(e.target.value)}
+        />
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <span className="muted" style={{ fontSize: 11, width: "100%" }}>
+            ✨ {t("smartCaptions")}
+          </span>
+          {ideas.map((idea) => (
+            <button
+              key={idea}
+              type="button"
+              className="chip"
+              style={{ fontSize: 12 }}
+              onClick={() => setCaption(idea)}
+            >
+              {idea}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="chip"
+            onClick={() =>
+              setIdeas([captionForTime(locale), ...suggestCaptions(locale, 5)])
+            }
+          >
+            ↻
+          </button>
+        </div>
+
+        {showDual && (
+          <>
+            <label
+              className="muted"
+              style={{ display: "block", fontSize: 12, marginTop: 4 }}
+            >
+              {t("caption2")} · {otherLocale.toUpperCase()}
+            </label>
+            <input
+              className="field"
+              placeholder={t("caption2Placeholder")}
+              value={caption2}
+              maxLength={80}
+              onChange={(e) => setCaption2(e.target.value)}
+            />
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {ideas2.map((idea) => (
+                <button
+                  key={`2-${idea}`}
+                  type="button"
+                  className="chip"
+                  style={{ fontSize: 12 }}
+                  onClick={() => setCaption2(idea)}
+                >
+                  {idea}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="chip"
+                onClick={() =>
+                  setIdeas2([
+                    captionForTime(otherLocale),
+                    ...suggestCaptions(otherLocale, 5),
+                  ])
+                }
+              >
+                ↻
+              </button>
+            </div>
+          </>
+        )}
+
+        {(caption || caption2) && (
+          <div
+            style={{
+              marginTop: 4,
+              padding: 10,
+              borderRadius: 12,
+              background: "#0a0a0a",
+              border: "1px dashed #333",
+              textAlign: "center",
+            }}
+          >
+            <div className="muted" style={{ fontSize: 11, marginBottom: 4 }}>
+              {t("dualPreview")}
+            </div>
+            {caption && (
+              <div style={{ fontWeight: 800, fontSize: 15 }}>{caption}</div>
+            )}
+            {showDual && caption2 && (
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: "var(--accent)",
+                  marginTop: 4,
+                }}
+              >
+                {caption2}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <p className="muted">{t("duration")}</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

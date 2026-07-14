@@ -258,6 +258,17 @@ export function MePage() {
             </div>
           )}
 
+        {profile?.is_admin && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ width: "100%", marginTop: 16 }}
+            onClick={() => nav("/admin")}
+          >
+            🛡️ {t("adminTitle")}
+          </button>
+        )}
+
         <h3 style={{ marginTop: 20 }}>{t("enableNotifs")}</h3>
         <button
           type="button"

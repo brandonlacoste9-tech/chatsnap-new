@@ -21,6 +21,7 @@ export type Profile = {
   vibe_updated_at?: string | null;
   show_on_map?: boolean;
   restricted_mode?: boolean;
+  is_admin?: boolean;
   created_at?: string;
 };
 

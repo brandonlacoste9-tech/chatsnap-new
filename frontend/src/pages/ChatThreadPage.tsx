@@ -16,6 +16,13 @@ import {
   closeTypingChannel,
   openTypingChannel,
 } from "@/lib/typing";
+import {
+  groupReactionEmojis,
+  listMessageReactions,
+  REACTION_EMOJIS,
+  sendMessageReaction,
+  type MsgReaction,
+} from "@/lib/reactions";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import { BottomChrome } from "@/components/BottomChrome";
@@ -63,6 +70,8 @@ export function ChatThreadPage() {
   const typingTimerRef = useRef<number | undefined>(undefined);
   const lastTypedRef = useRef(0);
   const [friendTyping, setFriendTyping] = useState(false);
+  const [reacts, setReacts] = useState<Map<string, MsgReaction[]>>(new Map());
+  const [reactMenu, setReactMenu] = useState<string | null>(null);
 
   const myId = user?.id;
 
@@ -72,7 +81,6 @@ export function ChatThreadPage() {
     setMsgs(list);
     void markThreadRead(myId, friendId);
 
-    // Resolve audio URLs
     const next: Record<string, string> = {};
     for (const m of list) {
       if (m.media_type === "audio" && m.media_path) {
@@ -81,7 +89,20 @@ export function ChatThreadPage() {
       }
     }
     setAudioUrls((prev) => ({ ...prev, ...next }));
+
+    const map = await listMessageReactions(list.map((m) => m.id));
+    setReacts(map);
   }, [myId, friendId]);
+
+  async function onReactMsg(messageId: string, emoji: string) {
+    if (!myId) return;
+    const err = await sendMessageReaction(messageId, myId, emoji);
+    if (err) toast(err, "err");
+    else {
+      setReactMenu(null);
+      void load();
+    }
+  }
 
   useEffect(() => {
     if (!friendId || !supabase) return;
@@ -401,6 +422,66 @@ export function ChatThreadPage() {
                     )}
                   </div>
                 )}
+
+                {/* Reaction chips */}
+                {groupReactionEmojis(reacts.get(m.id), myId).length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 4,
+                      marginTop: 6,
+                    }}
+                  >
+                    {groupReactionEmojis(reacts.get(m.id), myId).map((g) => (
+                      <button
+                        key={g.emoji}
+                        type="button"
+                        onClick={() => void onReactMsg(m.id, g.emoji)}
+                        style={{
+                          border: g.mine
+                            ? "1px solid var(--accent)"
+                            : "1px solid var(--border)",
+                          background: g.mine
+                            ? "rgba(255,252,0,0.15)"
+                            : "rgba(0,0,0,0.35)",
+                          borderRadius: 999,
+                          padding: "2px 8px",
+                          fontSize: 13,
+                          cursor: "pointer",
+                          color: "#fff",
+                        }}
+                      >
+                        {g.emoji}
+                        {g.count > 1 ? ` ${g.count}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {reactMenu === m.id && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 4,
+                      marginTop: 6,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {REACTION_EMOJIS.map((e) => (
+                      <button
+                        key={e}
+                        type="button"
+                        className="chip"
+                        style={{ fontSize: 16, minWidth: 36, height: 36 }}
+                        onClick={() => void onReactMsg(m.id, e)}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div
                   className="muted"
                   style={{
@@ -418,6 +499,24 @@ export function ChatThreadPage() {
                       minute: "2-digit",
                     })}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReactMenu((cur) => (cur === m.id ? null : m.id))
+                    }
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--muted)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      padding: 0,
+                    }}
+                    title={t("react")}
+                  >
+                    {reactMenu === m.id ? "✕" : "☺"}
+                  </button>
                   {m.media_type === "text" && m.body && (
                     <button
                       type="button"
