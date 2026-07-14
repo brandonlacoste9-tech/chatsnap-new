@@ -13,6 +13,8 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import { BottomChrome } from "@/components/BottomChrome";
+import { translateText } from "@/lib/translate";
+import { blockUser } from "@/lib/blocks";
 
 export function ChatThreadPage() {
   const { friendId } = useParams();
@@ -26,6 +28,7 @@ export function ChatThreadPage() {
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
+  const [translations, setTranslations] = useState<Record<string, string>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -110,6 +113,34 @@ export function ChatThreadPage() {
     void load();
   }
 
+  async function onTranslate(m: ChatMessage) {
+    if (!m.body || translations[m.id]) {
+      setTranslations((prev) => {
+        const n = { ...prev };
+        delete n[m.id];
+        return n;
+      });
+      return;
+    }
+    const res = await translateText(m.body);
+    if (!res) {
+      toast(t("translateFail"), "err");
+      return;
+    }
+    setTranslations((prev) => ({ ...prev, [m.id]: res.text }));
+  }
+
+  async function onBlock() {
+    if (!myId || !friendId) return;
+    if (!confirm(t("blockConfirm"))) return;
+    const err = await blockUser(myId, friendId);
+    if (err) toast(err, "err");
+    else {
+      toast(t("blocked"), "ok");
+      nav("/chats", { replace: true });
+    }
+  }
+
   async function startVoice() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -185,6 +216,14 @@ export function ChatThreadPage() {
           >
             📷
           </button>
+          <button
+            type="button"
+            className="chip"
+            title={t("block")}
+            onClick={() => void onBlock()}
+          >
+            🚫
+          </button>
         </header>
 
         <div
@@ -219,6 +258,19 @@ export function ChatThreadPage() {
                 {m.media_type === "text" && (
                   <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                     {m.body}
+                    {translations[m.id] && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          paddingTop: 6,
+                          borderTop: "1px solid rgba(255,255,255,0.12)",
+                          fontStyle: "italic",
+                          opacity: 0.9,
+                        }}
+                      >
+                        🌐 {translations[m.id]}
+                      </div>
+                    )}
                   </div>
                 )}
                 {m.media_type === "audio" && (
@@ -235,12 +287,38 @@ export function ChatThreadPage() {
                 )}
                 <div
                   className="muted"
-                  style={{ fontSize: 10, marginTop: 4, textAlign: mine ? "right" : "left" }}
+                  style={{
+                    fontSize: 10,
+                    marginTop: 4,
+                    display: "flex",
+                    gap: 8,
+                    justifyContent: mine ? "flex-end" : "flex-start",
+                    alignItems: "center",
+                  }}
                 >
-                  {new Date(m.created_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  <span>
+                    {new Date(m.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  {m.media_type === "text" && m.body && (
+                    <button
+                      type="button"
+                      onClick={() => void onTranslate(m)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--accent)",
+                        fontSize: 11,
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        padding: 0,
+                      }}
+                    >
+                      {translations[m.id] ? t("hideTranslation") : "EN⇄FR"}
+                    </button>
+                  )}
                 </div>
               </div>
             );

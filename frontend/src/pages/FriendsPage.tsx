@@ -16,6 +16,7 @@ import { useToast } from "@/components/Toast";
 import { shareInvite } from "@/lib/media";
 import { listStreaksForUser } from "@/lib/streaks";
 import { StoriesRail } from "@/components/StoriesRail";
+import { blockUser } from "@/lib/blocks";
 
 export function FriendsPage() {
   const t = useT();
@@ -371,6 +372,25 @@ export function FriendsPage() {
               onClick={() => nav(`/chat/${e.profile.id}`)}
             >
               💬
+            </button>
+            <button
+              type="button"
+              className="chip"
+              style={{ marginLeft: 4 }}
+              title={t("block")}
+              onClick={() => {
+                if (!myId) return;
+                if (!confirm(t("blockConfirm"))) return;
+                void blockUser(myId, e.profile.id).then((err) => {
+                  if (err) toast(err, "err");
+                  else {
+                    toast(t("blocked"), "ok");
+                    void reload();
+                  }
+                });
+              }}
+            >
+              🚫
             </button>
           </div>
         ))}

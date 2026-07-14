@@ -52,6 +52,12 @@ const GroupThreadPage = lazy(() =>
     default: m.GroupThreadPage,
   })),
 );
+const MemoriesPage = lazy(() =>
+  import("@/pages/MemoriesPage").then((m) => ({ default: m.MemoriesPage })),
+);
+const MapPage = lazy(() =>
+  import("@/pages/MapPage").then((m) => ({ default: m.MapPage })),
+);
 const SwipeShell = lazy(() =>
   import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
 );
@@ -233,6 +239,22 @@ export default function App() {
           element={
             <RU>
               <DiscoverPage />
+            </RU>
+          }
+        />
+        <Route
+          path="/memories"
+          element={
+            <RU>
+              <MemoriesPage />
+            </RU>
+          }
+        />
+        <Route
+          path="/map"
+          element={
+            <RU>
+              <MapPage />
             </RU>
           }
         />

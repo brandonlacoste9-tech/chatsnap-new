@@ -123,6 +123,31 @@ export const en = {
   noGroups: "No groups yet. Create one with your friends.",
   members: "members",
   needGroupMembers: "Pick at least one friend",
+  memories: "Memories",
+  memoriesHint:
+    "Your permanent vault. Snaps disappear for friends — yours stay here if you save them.",
+  noMemories: "No memories yet. Send a snap with “Save to Memories” on.",
+  saveToMemories: "Save to Memories (yours forever)",
+  deleteMemoryConfirm: "Delete this memory forever?",
+  delete: "Delete",
+  deleted: "Deleted",
+  block: "Block",
+  blockConfirm: "Block this user? They can't message or snap you.",
+  blocked: "Blocked",
+  hideTranslation: "Hide",
+  translateFail: "Translation unavailable",
+  snapMap: "Friends Map",
+  mapHint:
+    "Opt-in only. Friends who share location appear here — no creepy always-on Snap Map.",
+  mapShare: "Share my location",
+  mapOn: "Sharing · on",
+  mapOff: "Location sharing off",
+  mapUpdated: "Location updated",
+  updateLocation: "Update pin",
+  noGeo: "Location permission denied",
+  you: "You",
+  betterThanSnap:
+    "Bilingual EN⇄FR · Memories vault · opt-in map · no dark patterns. Built for your crew.",
 } as const;
 
 export type MessageKey = keyof typeof en;

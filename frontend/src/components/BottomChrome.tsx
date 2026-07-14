@@ -58,6 +58,10 @@ export function BottomChrome() {
         zIndex: 40,
       }}
     >
+      <NavLink to="/map" style={linkStyle}>
+        🗺️
+        <div>{t("snapMap").split(" ")[0]}</div>
+      </NavLink>
       <NavLink to="/friends" style={linkStyle}>
         👥
         <div>{t("friends")}</div>

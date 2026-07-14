@@ -8,6 +8,7 @@ import { publishStory } from "@/lib/stories";
 import { publishSpotlight } from "@/lib/spotlight";
 import { compressImage } from "@/lib/media";
 import { listStreaksForUser } from "@/lib/streaks";
+import { saveMemory } from "@/lib/memories";
 import { useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import type { CaptureResult } from "@/hooks/useCamera";
@@ -32,6 +33,7 @@ export function SendToPage() {
   const [dest, setDest] = useState<Dest>(
     capture?.toStory ? "story" : "friends",
   );
+  const [saveVault, setSaveVault] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -130,12 +132,34 @@ export function SendToPage() {
       });
     }
 
-    setBusy(false);
     if (err) {
+      setBusy(false);
       setError(err);
       toast(err, "err");
       return;
     }
+
+    // Better than Snap: keep a permanent copy if you want
+    if (saveVault) {
+      const memErr = await saveMemory({
+        userId: senderId,
+        blob,
+        mediaType: capture.mediaType,
+        caption: caption.trim() || undefined,
+        source:
+          dest === "story"
+            ? "story"
+            : dest === "spotlight"
+              ? "spotlight"
+              : "snap",
+      });
+      if (memErr) {
+        // non-fatal
+        console.warn("memory save", memErr);
+      }
+    }
+
+    setBusy(false);
     URL.revokeObjectURL(capture.previewUrl);
     const okMsg =
       dest === "story"
@@ -143,7 +167,7 @@ export function SendToPage() {
         : dest === "spotlight"
           ? t("spotlightPosted")
           : t("sendOk");
-    toast(okMsg, "ok");
+    toast(saveVault ? `${okMsg} · 💾` : okMsg, "ok");
     nav(
       dest === "spotlight" ? "/discover" : dest === "story" ? "/friends" : "/app",
       { replace: true },
@@ -318,6 +342,23 @@ export function SendToPage() {
           {t("spotlightHint")}
         </p>
       )}
+
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginTop: 14,
+          cursor: "pointer",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={saveVault}
+          onChange={(e) => setSaveVault(e.target.checked)}
+        />
+        <span>💾 {t("saveToMemories")}</span>
+      </label>
 
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 

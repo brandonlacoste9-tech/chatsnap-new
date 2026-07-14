@@ -54,7 +54,21 @@ export async function listDiscoverableUsers(
     .order("username", { ascending: true })
     .limit(50);
   if (error) return { users: [], error: error.message };
-  return { users: (data as Profile[]) ?? [] };
+
+  // Hide blocked either way
+  const { data: blocked } = await supabase
+    .from("blocks")
+    .select("blocker_id, blocked_id")
+    .or(`blocker_id.eq.${myId},blocked_id.eq.${myId}`);
+  const hide = new Set<string>();
+  for (const b of blocked ?? []) {
+    if (b.blocker_id === myId) hide.add(b.blocked_id as string);
+    else hide.add(b.blocker_id as string);
+  }
+
+  return {
+    users: ((data as Profile[]) ?? []).filter((u) => !hide.has(u.id)),
+  };
 }
 
 export async function sendFriendRequest(

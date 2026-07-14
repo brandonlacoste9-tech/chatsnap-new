@@ -89,14 +89,41 @@ export function MePage() {
           {locale.toUpperCase()}
         </p>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          style={{ width: "100%", marginTop: 16 }}
-          onClick={() => nav("/discover")}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 8,
+            marginTop: 16,
+          }}
         >
-          ✨ {t("discover")}
-        </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => nav("/discover")}
+          >
+            ✨ {t("discover")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => nav("/memories")}
+          >
+            💾 {t("memories")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ gridColumn: "1 / -1" }}
+            onClick={() => nav("/map")}
+          >
+            🗺️ {t("snapMap")}
+          </button>
+        </div>
+
+        <p className="muted" style={{ fontSize: 12, marginTop: 12 }}>
+          {t("betterThanSnap")}
+        </p>
 
         <h3 style={{ marginTop: 20 }}>{t("enableNotifs")}</h3>
         <button
