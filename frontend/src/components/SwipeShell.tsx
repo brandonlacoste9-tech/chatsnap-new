@@ -8,30 +8,55 @@ export function SwipeShell() {
   const scroller = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  /** Ignore scroll→route updates while we programmatically jump panels. */
+  const lockRef = useRef(false);
+
+  const wantInbox = location.pathname.includes("inbox");
 
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    const wantInbox = location.pathname.includes("inbox");
-    el.scrollTo({ left: wantInbox ? el.clientWidth : 0, behavior: "smooth" });
-  }, [location.pathname]);
+
+    const jump = () => {
+      lockRef.current = true;
+      const w = el.clientWidth || window.innerWidth;
+      el.scrollTo({ left: wantInbox ? w : 0, behavior: "auto" });
+      // release after layout settles
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          lockRef.current = false;
+        });
+      });
+    };
+
+    jump();
+    // Retry once if width was 0 on first paint
+    const t = window.setTimeout(jump, 60);
+    return () => window.clearTimeout(t);
+  }, [wantInbox]);
 
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
+
     let ticking = false;
     const onScroll = () => {
+      if (lockRef.current) return;
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         ticking = false;
-        const page = el.scrollLeft > el.clientWidth * 0.5 ? "inbox" : "camera";
+        if (lockRef.current) return;
+        const w = el.clientWidth;
+        if (w < 10) return;
+        const page = el.scrollLeft > w * 0.5 ? "inbox" : "camera";
         const path = page === "inbox" ? "/app/inbox" : "/app";
         if (location.pathname !== path) {
           navigate(path, { replace: true });
         }
       });
     };
+
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [location.pathname, navigate]);
@@ -47,7 +72,6 @@ export function SwipeShell() {
         height: "100%",
         width: "100%",
         WebkitOverflowScrolling: "touch",
-        // Prefer horizontal swipe; buttons use touch-action: manipulation
         touchAction: "pan-x",
       }}
     >
@@ -70,6 +94,8 @@ export function SwipeShell() {
           scrollSnapAlign: "start",
           flexShrink: 0,
           overflowY: "auto",
+          // allow vertical scroll on inbox list
+          touchAction: "pan-y",
         }}
       >
         <InboxPage />

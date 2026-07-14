@@ -89,19 +89,27 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
   if (!supabase) return [];
 
   const now = new Date().toISOString();
+  // Two-step fetch avoids nested embed RLS edge cases
   const { data: recs, error } = await supabase
     .from("snap_recipients")
-    .select("id, snap_id, status, snaps(*)")
+    .select("id, snap_id, status")
     .eq("recipient_id", myId)
     .eq("status", "pending");
 
   if (error || !recs?.length) return [];
 
-  const items: InboxItem[] = [];
-  const senderIds = new Set<string>();
+  const snapIds = [...new Set(recs.map((r) => r.snap_id as string))];
+  const { data: snaps, error: sErr } = await supabase
+    .from("snaps")
+    .select(
+      "id, sender_id, media_type, duration_sec, created_at, expires_at, caption, caption_2",
+    )
+    .in("id", snapIds);
 
-  for (const r of recs) {
-    const snap = r.snaps as unknown as {
+  if (sErr || !snaps?.length) return [];
+
+  const snapById = new Map(
+    snaps.map((s) => [s.id as string, s as {
       id: string;
       sender_id: string;
       media_type: "image" | "video";
@@ -110,7 +118,14 @@ export async function listInbox(myId: string): Promise<InboxItem[]> {
       expires_at: string;
       caption: string | null;
       caption_2: string | null;
-    } | null;
+    }]),
+  );
+
+  const items: InboxItem[] = [];
+  const senderIds = new Set<string>();
+
+  for (const r of recs) {
+    const snap = snapById.get(r.snap_id as string);
     if (!snap) continue;
     if (snap.expires_at < now) continue;
     senderIds.add(snap.sender_id);
@@ -240,14 +255,24 @@ export async function openSnap(recipientRowId: string): Promise<{
 
   const { data: rec, error } = await supabase
     .from("snap_recipients")
-    .select("id, status, snap_id, snaps(*)")
+    .select("id, status, snap_id")
     .eq("id", recipientRowId)
     .maybeSingle();
 
   if (error || !rec) return empty("gone");
   if (rec.status === "consumed") return empty("gone");
 
-  const snap = rec.snaps as unknown as {
+  const { data: snapRow, error: snapErr } = await supabase
+    .from("snaps")
+    .select(
+      "id, sender_id, media_path, media_type, duration_sec, expires_at, caption, caption_2",
+    )
+    .eq("id", rec.snap_id as string)
+    .maybeSingle();
+
+  if (snapErr || !snapRow) return empty("gone");
+
+  const snap = snapRow as {
     id: string;
     sender_id: string;
     media_path: string;
