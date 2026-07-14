@@ -15,6 +15,7 @@ import { useToast } from "@/components/Toast";
 import { BottomChrome } from "@/components/BottomChrome";
 import { translateText } from "@/lib/translate";
 import { blockUser } from "@/lib/blocks";
+import { reportUser } from "@/lib/safety";
 
 export function ChatThreadPage() {
   const { friendId } = useParams();
@@ -142,6 +143,20 @@ export function ChatThreadPage() {
     }
   }
 
+  async function onReport() {
+    if (!myId || !friendId) return;
+    const reason = window.prompt(t("reportPrompt"));
+    if (!reason || reason.trim().length < 3) return;
+    const err = await reportUser({
+      reporterId: myId,
+      reportedId: friendId,
+      reason,
+      context: "chat",
+    });
+    if (err) toast(err, "err");
+    else toast(t("reportSent"), "ok");
+  }
+
   async function startVoice() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -216,6 +231,14 @@ export function ChatThreadPage() {
             title={t("camera")}
           >
             📷
+          </button>
+          <button
+            type="button"
+            className="chip"
+            title={t("report")}
+            onClick={() => void onReport()}
+          >
+            🚩
           </button>
           <button
             type="button"

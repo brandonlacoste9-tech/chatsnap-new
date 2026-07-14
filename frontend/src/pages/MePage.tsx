@@ -7,15 +7,20 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/components/Toast";
 import { inviteUrl, shareInvite } from "@/lib/media";
 import { ensureNotifyPermission } from "@/lib/notifications";
+import { setRestrictedMode } from "@/lib/safety";
 
 export function MePage() {
   const t = useT();
   const { locale } = useI18n();
-  const { profile, demoMode, signOut, setVibeStatus } = useAuth();
+  const { profile, demoMode, signOut, setVibeStatus, refreshProfile, user } =
+    useAuth();
   const nav = useNavigate();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [vibe, setVibe] = useState(profile?.vibe_status ?? "");
+  const [restricted, setRestricted] = useState(
+    Boolean(profile?.restricted_mode),
+  );
   const [notifState, setNotifState] = useState(() =>
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
@@ -145,13 +150,15 @@ export function MePage() {
             marginTop: 16,
           }}
         >
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => nav("/discover")}
-          >
-            ✨ {t("discover")}
-          </button>
+          {!restricted && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => nav("/discover")}
+            >
+              ✨ {t("discover")}
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-primary"
@@ -162,12 +169,46 @@ export function MePage() {
           <button
             type="button"
             className="btn btn-ghost"
-            style={{ gridColumn: "1 / -1" }}
-            onClick={() => nav("/map")}
+            onClick={() => nav("/stickers")}
           >
-            🗺️ {t("snapMap")}
+            🖼️ {t("myStickers")}
           </button>
+          {!restricted && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => nav("/map")}
+            >
+              🗺️ {t("snapMap")}
+            </button>
+          )}
         </div>
+
+        <h3 style={{ marginTop: 20 }}>{t("restrictedMode")}</h3>
+        <p className="muted" style={{ fontSize: 12 }}>
+          {t("restrictedHint")}
+        </p>
+        <button
+          type="button"
+          className={`chip ${restricted ? "active" : ""}`}
+          disabled={busy || demoMode}
+          onClick={() => {
+            if (!user?.id) return;
+            const next = !restricted;
+            setBusy(true);
+            void setRestrictedMode(user.id, next).then((err) => {
+              setBusy(false);
+              if (err) toast(err, "err");
+              else {
+                setRestricted(next);
+                void refreshProfile();
+                toast(next ? t("restrictedOn") : t("restrictedOff"), "ok");
+              }
+            });
+          }}
+        >
+          {restricted ? t("restrictedOn") : t("restrictedOff")}
+        </button>
 
         <p className="muted" style={{ fontSize: 12, marginTop: 12 }}>
           {t("betterThanSnap")}

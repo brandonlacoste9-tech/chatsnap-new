@@ -58,6 +58,9 @@ const MemoriesPage = lazy(() =>
 const MapPage = lazy(() =>
   import("@/pages/MapPage").then((m) => ({ default: m.MapPage })),
 );
+const StickersPage = lazy(() =>
+  import("@/pages/StickersPage").then((m) => ({ default: m.StickersPage })),
+);
 const SwipeShell = lazy(() =>
   import("@/components/SwipeShell").then((m) => ({ default: m.SwipeShell })),
 );
@@ -255,6 +258,14 @@ export default function App() {
           element={
             <RU>
               <MapPage />
+            </RU>
+          }
+        />
+        <Route
+          path="/stickers"
+          element={
+            <RU>
+              <StickersPage />
             </RU>
           }
         />

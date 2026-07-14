@@ -9,7 +9,8 @@ import { publishSpotlight } from "@/lib/spotlight";
 import { compressImage } from "@/lib/media";
 import { listStreaksForUser } from "@/lib/streaks";
 import { saveMemory } from "@/lib/memories";
-import { useT } from "@/lib/i18n";
+import { captionForTime, suggestCaptions } from "@/lib/captions";
+import { useI18n, useT } from "@/lib/i18n";
 import { useToast } from "@/components/Toast";
 import type { CaptureResult } from "@/hooks/useCamera";
 
@@ -20,16 +21,19 @@ type SendState = CaptureResult & { toStory?: boolean };
 
 export function SendToPage() {
   const t = useT();
+  const { locale } = useI18n();
   const nav = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const capture = location.state as SendState | null;
   const { user, demoMode, profile } = useAuth();
+  const restricted = Boolean(profile?.restricted_mode);
   const [friends, setFriends] = useState<Profile[]>([]);
   const [streaks, setStreaks] = useState<Map<string, number>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [duration, setDuration] = useState(5);
   const [caption, setCaption] = useState("");
+  const [ideas, setIdeas] = useState<string[]>([]);
   const [dest, setDest] = useState<Dest>(
     capture?.toStory ? "story" : "friends",
   );
@@ -43,6 +47,7 @@ export function SendToPage() {
       return;
     }
     if (capture.toStory) setDest("story");
+    setIdeas([captionForTime(locale), ...suggestCaptions(locale, 5)]);
     const id = user?.id ?? profile?.id;
     if (!id || demoMode) {
       setFriends([]);
@@ -55,7 +60,7 @@ export function SendToPage() {
         setSelected(new Set([list[0].id]));
       setStreaks(await listStreaksForUser(id));
     })();
-  }, [capture, user?.id, profile?.id, demoMode, nav]);
+  }, [capture, user?.id, profile?.id, demoMode, nav, locale]);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -223,13 +228,15 @@ export function SendToPage() {
         >
           📖 {t("myStory")}
         </button>
-        <button
-          type="button"
-          className={`chip ${dest === "spotlight" ? "active" : ""}`}
-          onClick={() => setDest("spotlight")}
-        >
-          ✨ {t("spotlight")}
-        </button>
+        {!restricted && (
+          <button
+            type="button"
+            className={`chip ${dest === "spotlight" ? "active" : ""}`}
+            onClick={() => setDest("spotlight")}
+          >
+            ✨ {t("spotlight")}
+          </button>
+        )}
       </div>
 
       <label className="muted" style={{ display: "block", marginTop: 12 }}>
@@ -242,6 +249,38 @@ export function SendToPage() {
         maxLength={80}
         onChange={(e) => setCaption(e.target.value)}
       />
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          flexWrap: "wrap",
+          marginTop: 8,
+        }}
+      >
+        <span className="muted" style={{ fontSize: 12, width: "100%" }}>
+          ✨ {t("smartCaptions")}
+        </span>
+        {ideas.map((idea) => (
+          <button
+            key={idea}
+            type="button"
+            className="chip"
+            style={{ fontSize: 12 }}
+            onClick={() => setCaption(idea)}
+          >
+            {idea}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="chip"
+          onClick={() =>
+            setIdeas([captionForTime(locale), ...suggestCaptions(locale, 5)])
+          }
+        >
+          ↻
+        </button>
+      </div>
 
       <p className="muted">{t("duration")}</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

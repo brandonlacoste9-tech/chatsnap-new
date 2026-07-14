@@ -157,6 +157,21 @@ export const en = {
   ephemeralHint: "Vanishes after they read it (or in 24h)",
   freezeHint: "Tap to freeze streak 24h (1× / week) — no FOMO panic",
   freezeOn: "Streak freeze on · you can miss a day",
+  myStickers: "My stickers",
+  stickersHint: "Upload your own stickers — use them when you doodle a snap.",
+  addSticker: "Add sticker",
+  noCustomStickers: "No custom stickers yet. Add one from Me → Stickers.",
+  stickerAdded: "Sticker added!",
+  smartCaptions: "Smart captions (EN / FR / QC)",
+  restrictedMode: "Restricted mode",
+  restrictedHint:
+    "Hides Discover, Spotlight & Map. Good for younger users / focus mode.",
+  restrictedOn: "Restricted · on",
+  restrictedOff: "Restricted · off",
+  restrictedDiscover: "Discover is off in restricted mode.",
+  report: "Report",
+  reportPrompt: "Why are you reporting this user?",
+  reportSent: "Report sent. Thanks for keeping the hive safe.",
 } as const;
 
 export type MessageKey = keyof typeof en;

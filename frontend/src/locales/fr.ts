@@ -159,4 +159,20 @@ export const fr: Dict = {
   ephemeralHint: "Disparaît après lecture (ou en 24 h)",
   freezeHint: "Gèle la série 24 h (1× / semaine) — zéro panique FOMO",
   freezeOn: "Gel de série actif · tu peux manquer une journée",
+  myStickers: "Mes stickers",
+  stickersHint:
+    "Uploade tes propres stickers — utilise-les en doodlant un snap.",
+  addSticker: "Ajouter un sticker",
+  noCustomStickers: "Pas encore de stickers. Ajoutes-en via Moi → Stickers.",
+  stickerAdded: "Sticker ajouté !",
+  smartCaptions: "Légendes smart (EN / FR / QC)",
+  restrictedMode: "Mode restreint",
+  restrictedHint:
+    "Cache Discover, Spotlight et la carte. Idéal pour plus jeunes / focus.",
+  restrictedOn: "Restreint · on",
+  restrictedOff: "Restreint · off",
+  restrictedDiscover: "Discover est off en mode restreint.",
+  report: "Signaler",
+  reportPrompt: "Pourquoi signales-tu cet utilisateur ?",
+  reportSent: "Signalement envoyé. Merci de garder la ruche safe.",
 };

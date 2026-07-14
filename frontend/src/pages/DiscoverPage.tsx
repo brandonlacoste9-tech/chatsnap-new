@@ -14,12 +14,13 @@ export function DiscoverPage() {
   const t = useT();
   const nav = useNavigate();
   const { toast } = useToast();
-  const { user, demoMode } = useAuth();
+  const { user, demoMode, profile } = useAuth();
+  const restricted = Boolean(profile?.restricted_mode);
   const [posts, setPosts] = useState<SpotlightPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!user?.id || demoMode) {
+    if (!user?.id || demoMode || restricted) {
       setPosts([]);
       setLoading(false);
       return;
@@ -27,7 +28,7 @@ export function DiscoverPage() {
     setLoading(true);
     setPosts(await listSpotlight(user.id));
     setLoading(false);
-  }, [user?.id, demoMode]);
+  }, [user?.id, demoMode, restricted]);
 
   useEffect(() => {
     void load();
@@ -73,8 +74,11 @@ export function DiscoverPage() {
         </p>
 
         {demoMode && <div className="banner">{t("setupBanner")}</div>}
-        {loading && <p className="muted">{t("loading")}</p>}
-        {!loading && posts.length === 0 && (
+        {restricted && (
+          <div className="banner">{t("restrictedDiscover")}</div>
+        )}
+        {loading && !restricted && <p className="muted">{t("loading")}</p>}
+        {!restricted && !loading && posts.length === 0 && (
           <div className="list-row" style={{ flexDirection: "column", gap: 10 }}>
             <p className="muted" style={{ margin: 0 }}>
               {t("emptySpotlight")}
@@ -90,7 +94,8 @@ export function DiscoverPage() {
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {posts.map((p) => (
+          {!restricted &&
+            posts.map((p) => (
             <article
               key={p.id}
               style={{
@@ -152,7 +157,7 @@ export function DiscoverPage() {
                 </button>
               </div>
             </article>
-          ))}
+            ))}
         </div>
       </div>
       <BottomChrome />

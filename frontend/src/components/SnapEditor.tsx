@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useT } from "@/lib/i18n";
+import { useAuth } from "@/contexts/AuthContext";
+import { listMyStickers, type UserSticker } from "@/lib/stickers";
 
-const STICKERS = ["🔥", "😂", "❤️", "💀", "✨", "🇨🇦", "👀", "🎉", "❄️", "👑"];
+const EMOJI = ["🔥", "😂", "❤️", "💀", "✨", "🇨🇦", "👀", "🎉", "❄️", "👑", "⚜️", "☕"];
 
-type Mode = "draw" | "sticker";
+type Mode = "draw" | "sticker" | "custom";
 
 export type SnapEditorProps = {
   imageUrl: string;
@@ -12,9 +14,6 @@ export type SnapEditorProps = {
   onRetake: () => void;
 };
 
-/**
- * Draw + emoji stickers on a photo, export flattened JPEG.
- */
 export function SnapEditor({
   imageUrl,
   onDone,
@@ -22,10 +21,13 @@ export function SnapEditor({
   onRetake,
 }: SnapEditorProps) {
   const t = useT();
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>("draw");
   const [color, setColor] = useState("#FFFC00");
-  const [sticker, setSticker] = useState(STICKERS[0]);
+  const [sticker, setSticker] = useState(EMOJI[0]);
+  const [custom, setCustom] = useState<UserSticker[]>([]);
+  const [activeCustom, setActiveCustom] = useState<UserSticker | null>(null);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
   const baseRef = useRef<HTMLImageElement | null>(null);
@@ -50,12 +52,21 @@ export function SnapEditor({
     img.src = imageUrl;
   }, [imageUrl]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    void listMyStickers(user.id).then((list) => {
+      setCustom(list);
+      if (list[0]) setActiveCustom(list[0]);
+    });
+  }, [user?.id]);
+
   function pos(e: PointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current!;
     const r = canvas.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * canvas.width;
-    const y = ((e.clientY - r.top) / r.height) * canvas.height;
-    return { x, y };
+    return {
+      x: ((e.clientX - r.left) / r.width) * canvas.width,
+      y: ((e.clientY - r.top) / r.height) * canvas.height,
+    };
   }
 
   function onPointerDown(e: PointerEvent<HTMLCanvasElement>) {
@@ -71,6 +82,17 @@ export function SnapEditor({
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(sticker, p.x, p.y);
+      return;
+    }
+
+    if (mode === "custom" && activeCustom?.url) {
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.onload = () => {
+        const size = Math.max(48, canvas.width * 0.18);
+        ctx.drawImage(im, p.x - size / 2, p.y - size / 2, size, size);
+      };
+      im.src = activeCustom.url;
       return;
     }
 
@@ -145,12 +167,19 @@ export function SnapEditor({
         </button>
       </div>
 
-      <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: 8 }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          padding: 8,
+        }}
+      >
         <canvas
           ref={canvasRef}
           style={{
             maxWidth: "100%",
-            maxHeight: "55vh",
+            maxHeight: "50vh",
             borderRadius: 16,
             touchAction: "none",
             background: "#111",
@@ -162,7 +191,14 @@ export function SnapEditor({
         />
       </div>
 
-      <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div
+        style={{
+          padding: "0 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="button"
@@ -177,6 +213,13 @@ export function SnapEditor({
             onClick={() => setMode("sticker")}
           >
             😀 {t("stickers")}
+          </button>
+          <button
+            type="button"
+            className={`chip ${mode === "custom" ? "active" : ""}`}
+            onClick={() => setMode("custom")}
+          >
+            🖼️ {t("myStickers")}
           </button>
           <button type="button" className="chip" onClick={clearDraw}>
             {t("clear")}
@@ -205,7 +248,7 @@ export function SnapEditor({
 
         {mode === "sticker" && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {STICKERS.map((s) => (
+            {EMOJI.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -214,6 +257,49 @@ export function SnapEditor({
                 onClick={() => setSticker(s)}
               >
                 {s}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mode === "custom" && (
+          <div style={{ display: "flex", gap: 8, overflowX: "auto" }}>
+            {custom.length === 0 && (
+              <p className="muted" style={{ fontSize: 13 }}>
+                {t("noCustomStickers")}
+              </p>
+            )}
+            {custom.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setActiveCustom(s)}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 12,
+                  border:
+                    activeCustom?.id === s.id
+                      ? "2px solid var(--accent)"
+                      : "1px solid #333",
+                  padding: 2,
+                  background: "#111",
+                  flexShrink: 0,
+                }}
+              >
+                {s.url ? (
+                  <img
+                    src={s.url}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : (
+                  "?"
+                )}
               </button>
             ))}
           </div>

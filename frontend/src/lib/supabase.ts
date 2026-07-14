@@ -20,6 +20,7 @@ export type Profile = {
   vibe_status?: string | null;
   vibe_updated_at?: string | null;
   show_on_map?: boolean;
+  restricted_mode?: boolean;
   created_at?: string;
 };
 
