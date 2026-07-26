@@ -95,19 +95,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [demoMode, fetchProfile]);
 
+  const mapAuthError = (message: string | undefined) => {
+    if (!message) return null;
+    const m = message.toLowerCase();
+    if (
+      m.includes("failed to fetch") ||
+      m.includes("networkerror") ||
+      m.includes("load failed") ||
+      m.includes("network request failed")
+    ) {
+      return "Can't reach ChatSnap servers. Hard-refresh (Ctrl+Shift+R) or clear this site’s data — then try again. Old app cache may still point at a dead backend.";
+    }
+    if (m.includes("email not confirmed")) {
+      return "Confirm your email first, or sign up again (confirmation is off for new accounts).";
+    }
+    if (m.includes("invalid login")) {
+      return "Wrong email or password. This is a fresh backend — sign up again if you used ChatSnap before today.";
+    }
+    if (m.includes("rate limit") || m.includes("over_email")) {
+      return "Too many auth emails just now. Wait a minute, then try again.";
+    }
+    return message;
+  };
+
   const signUp = useCallback(async (email: string, password: string) => {
     if (!supabase) return "Demo mode — configure Supabase";
-    const { error } = await supabase.auth.signUp({ email, password });
-    return error?.message ?? null;
+    try {
+      const { error } = await supabase.auth.signUp({ email, password });
+      return mapAuthError(error?.message);
+    } catch (e) {
+      return mapAuthError(e instanceof Error ? e.message : "Failed to fetch");
+    }
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return "Demo mode — configure Supabase";
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return error?.message ?? null;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return mapAuthError(error?.message);
+    } catch (e) {
+      return mapAuthError(e instanceof Error ? e.message : "Failed to fetch");
+    }
   }, []);
 
   const signOut = useCallback(async () => {

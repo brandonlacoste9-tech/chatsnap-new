@@ -8,6 +8,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      // Bump when backend URL/env changes so old SW + precache drop dead assets
+      injectRegister: "auto",
       includeAssets: [
         "favicon.svg",
         "favicon-32.png",
@@ -15,7 +17,7 @@ export default defineConfig({
         "offline.html",
       ],
       manifest: {
-        id: "/",
+        id: "/?v=2026-07-26-backend",
         name: "ChatSnap",
         short_name: "ChatSnap",
         description:
@@ -27,7 +29,7 @@ export default defineConfig({
         display: "standalone",
         display_override: ["standalone", "browser"],
         orientation: "portrait-primary",
-        start_url: "/app",
+        start_url: "/app?v=2026-07-26",
         scope: "/",
         categories: ["social", "photo"],
         icons: [
@@ -80,6 +82,9 @@ export default defineConfig({
       },
       workbox: {
         // App shell only — never cache private API/media
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//, /^\/offline\.html$/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
