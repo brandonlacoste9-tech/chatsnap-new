@@ -205,6 +205,13 @@ export function LandingPage() {
           <Link to="/privacy">{t("privacy")}</Link>
           <Link to="/terms">{t("terms")}</Link>
           <a href="mailto:hello@chatsnap.app">{t("contact")}</a>
+          <a
+            href="https://hublife-192.netlify.app/?from=network&via=chatsnap&utm_source=north_network&utm_medium=cross_app&utm_campaign=chatsnap_v1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("northNetworkHome")}
+          </a>
         </nav>
         <p className="muted" style={{ margin: "16px 0 0", fontSize: 12 }}>
           {t("landCopyright")}

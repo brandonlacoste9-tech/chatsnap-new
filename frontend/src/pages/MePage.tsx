@@ -337,6 +337,21 @@ export function MePage() {
           {t("replayOnboarding")}
         </button>
 
+        <a
+          className="btn btn-ghost"
+          style={{
+            marginTop: 16,
+            width: "100%",
+            textAlign: "center",
+            textDecoration: "none",
+          }}
+          href="https://hublife-192.netlify.app/?from=network&via=chatsnap&utm_source=north_network&utm_medium=cross_app&utm_campaign=chatsnap_v1"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("northNetworkOpen")}
+        </a>
+
         <button
           type="button"
           className="btn btn-ghost"

@@ -281,6 +281,8 @@ export const en = {
   privacy: "Privacy",
   terms: "Terms",
   contact: "Contact",
+  northNetworkHome: "North Network · HubLife",
+  northNetworkOpen: "⌂ Open HubLife",
   more: "More",
   close: "Close",
   mainNav: "Main navigation",

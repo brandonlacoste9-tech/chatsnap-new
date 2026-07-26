@@ -286,6 +286,8 @@ export const fr: Dict = {
   privacy: "Confidentialité",
   terms: "Conditions",
   contact: "Contact",
+  northNetworkHome: "North Network · HubLife",
+  northNetworkOpen: "⌂ Ouvrir HubLife",
   more: "Plus",
   close: "Fermer",
   mainNav: "Navigation principale",

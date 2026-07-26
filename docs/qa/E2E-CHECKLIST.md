@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-14  
 **Live:** https://chatsnap-app.netlify.app  
-**Project:** `zzlaytfkqmbslcygnmrc`  
+**Project:** `cicyejwkmvsoodivqbcp` (reprovisioned 2026-07-26; old `zzlaytfkqmbslcygnmrc` retired)  
 **Goal:** Auth → friend → snap → react → chat → story → spotlight → group works on **2 devices**.
 
 Use **two browsers** (or phone + desktop). Call them **A** (you) and **B** (friend).  
