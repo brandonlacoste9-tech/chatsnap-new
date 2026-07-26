@@ -39,7 +39,7 @@ npm run dev
 ## Netlify settings
 
 Site: **https://chatsnap-app.netlify.app**  
-Supabase: project `cicyejwkmvsoodivqbcp` (ca-central-1) · part of **North Network** via [HubLife](https://hublife-192.netlify.app)
+Supabase: project `cicyejwkmvsoodivqbcp` (ca-central-1) · part of **North Network** via [HubLife](https://hublife.ca)
 
 | Field | Value |
 |--------|--------|

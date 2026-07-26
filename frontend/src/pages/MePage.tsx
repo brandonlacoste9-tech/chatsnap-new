@@ -345,7 +345,7 @@ export function MePage() {
             textAlign: "center",
             textDecoration: "none",
           }}
-          href="https://hublife-192.netlify.app/?from=network&via=chatsnap&utm_source=north_network&utm_medium=cross_app&utm_campaign=chatsnap_v1"
+          href="https://hublife.ca/?from=network&via=chatsnap&utm_source=north_network&utm_medium=cross_app&utm_campaign=chatsnap_v1"
           target="_blank"
           rel="noopener noreferrer"
         >
