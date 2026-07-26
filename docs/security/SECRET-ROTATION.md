@@ -44,28 +44,30 @@ Do this in order. Do **not** paste new secrets into chat or commit them to git.
 
 ---
 
-## 3. Database password (project `zzlaytfkqmbslcygnmrc`)
+## 3. Database password (project `cicyejwkmvsoodivqbcp`)
 
-1. Open: https://supabase.com/dashboard/project/zzlaytfkqmbslcygnmrc/settings/database  
+> **2026-07-26:** Reprovisioned. Old ref `zzlaytfkqmbslcygnmrc` is dead (NXDOMAIN). Current: `cicyejwkmvsoodivqbcp` (ca-central-1).
+
+1. Open: https://supabase.com/dashboard/project/cicyejwkmvsoodivqbcp/settings/database  
 2. **Database password → Reset**.  
 3. Save the new password in your password manager.  
 4. Update local only if you use CLI/psql:
    ```text
-   DATABASE_URL=postgresql://postgres:NEW_PASSWORD@db.zzlaytfkqmbslcygnmrc.supabase.co:5432/postgres
+   DATABASE_URL=postgresql://postgres:NEW_PASSWORD@db.cicyejwkmvsoodivqbcp.supabase.co:5432/postgres
    ```
 5. Re-link if needed:
    ```powershell
    cd C:\Users\north\chatsnap-new
    $env:SUPABASE_ACCESS_TOKEN = "new-sbp-token"
    $env:SUPABASE_DB_PASSWORD = "new-db-password"
-   npx supabase link --project-ref zzlaytfkqmbslcygnmrc
+   npx supabase link --project-ref cicyejwkmvsoodivqbcp
    ```
 
 ---
 
 ## 4. Supabase API keys (project)
 
-1. Open: https://supabase.com/dashboard/project/zzlaytfkqmbslcygnmrc/settings/api  
+1. Open: https://supabase.com/dashboard/project/cicyejwkmvsoodivqbcp/settings/api  
 2. Note:
    - **Project URL** — public  
    - **anon / public** (or publishable) — goes in **frontend** + Netlify `VITE_*`  
@@ -74,7 +76,7 @@ Do this in order. Do **not** paste new secrets into chat or commit them to git.
 4. Local app:
    ```powershell
    # frontend/.env  (gitignored)
-   VITE_SUPABASE_URL=https://zzlaytfkqmbslcygnmrc.supabase.co
+   VITE_SUPABASE_URL=https://cicyejwkmvsoodivqbcp.supabase.co
    VITE_SUPABASE_ANON_KEY=your_anon_or_publishable_key
    ```
 5. Netlify site env (https://app.netlify.com/projects/chatsnap-app/configuration/env):
