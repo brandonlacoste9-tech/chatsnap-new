@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { isOnboardingDone } from "@/lib/onboarding";
 import { useT } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { normalizeHiveCode } from "@/lib/hives";
+import {
+  clearNetworkParamsFromUrl,
+  hubLifeHomeUrl,
+  parseNetworkInbound,
+  stashSnapIntent,
+} from "@/lib/networkInbound";
 
 const FEATURES = [
   { icon: "🔒", titleKey: "landFeat1Title", bodyKey: "landFeat1Body" },
@@ -28,6 +34,15 @@ export function LandingPage() {
   const nav = useNavigate();
   const { ready, session, profile, demoMode } = useAuth();
   const [hiveCode, setHiveCode] = useState("");
+  const [fromHub, setFromHub] = useState(false);
+
+  useEffect(() => {
+    const inbound = parseNetworkInbound();
+    if (!inbound.fromNetwork && !inbound.intent) return;
+    setFromHub(true);
+    if (inbound.intent === "snap") stashSnapIntent();
+    clearNetworkParamsFromUrl();
+  }, []);
 
   if (!ready) {
     return (
@@ -40,6 +55,18 @@ export function LandingPage() {
   const signedIn =
     (demoMode || !!session) && !!profile?.username;
   if (signedIn) {
+    // HubLife snap intent → open camera when already in
+    const wantSnap =
+      typeof sessionStorage !== "undefined" &&
+      sessionStorage.getItem("chatsnap_network_intent") === "snap";
+    if (wantSnap && isOnboardingDone()) {
+      try {
+        sessionStorage.removeItem("chatsnap_network_intent");
+      } catch {
+        /* ignore */
+      }
+      return <Navigate to="/app" replace />;
+    }
     return (
       <Navigate
         to={isOnboardingDone() ? "/app" : "/onboarding"}
@@ -63,6 +90,30 @@ export function LandingPage() {
       </header>
 
       <main>
+        {fromHub ? (
+          <div
+            className="list-row"
+            style={{
+              margin: "12px 16px 0",
+              borderColor: "var(--accent)",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>
+              From <strong>HubLife</strong> · North Network — sign in to snap
+              your crew.
+            </span>
+            <a
+              href={hubLifeHomeUrl()}
+              className="btn btn-ghost"
+              style={{ flexShrink: 0, fontSize: 12 }}
+            >
+              Hub
+            </a>
+          </div>
+        ) : null}
+
         {/* Hero */}
         <section className="landing-hero">
           <p className="landing-kicker">{t("brandLine")}</p>
